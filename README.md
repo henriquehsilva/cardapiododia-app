@@ -16,7 +16,7 @@ Sem variáveis Firebase, o projeto funciona em modo demonstração: crie uma con
 
 1. Crie um projeto Firebase e habilite Authentication (e-mail/senha e Google), Firestore e Storage.
 2. Preencha as chaves `VITE_FIREBASE_*` em `.env` (e no painel da Netlify).
-3. Publique [firestore.rules](./firestore.rules) no Firestore e [storage.rules](./storage.rules) no Storage.
+3. Publique [firestore.rules](./firestore.rules) no Firestore. O upload para Storage está intencionalmente desativado nesta fase; a vitrine usa imagens padrão.
 
 Os documentos seguem `users/{uid}`, `stores/{storeId}`, `stores/{storeId}/menuItems/{itemId}` e a subcoleção de curtidas `likes/{deviceId}`. A regra de contador permite apenas um incremento público de `likesCount`; a criação imutável do documento do dispositivo impede repetição no mesmo navegador.
 
