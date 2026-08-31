@@ -8,6 +8,14 @@ export const handler = async (event) => {
     if (required.some((key) => !String(data[key] || '').trim())) return { statusCode: 400, body: JSON.stringify({ error: 'Preencha todos os campos obrigatórios.' }) };
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRO_PRICE_ID) return { statusCode: 503, body: JSON.stringify({ error: 'Stripe ainda não foi configurado no servidor.' }) };
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    let priceId = process.env.STRIPE_PRO_PRICE_ID;
+    // Accepting prod_ here makes setup less error-prone, while price_ remains
+    // the preferred value because Checkout line_items require a Price ID.
+    if (priceId.startsWith('prod_')) {
+      const product = await stripe.products.retrieve(priceId);
+      priceId = typeof product.default_price === 'string' ? product.default_price : product.default_price?.id;
+    }
+    if (!priceId || !priceId.startsWith('price_')) throw new Error('STRIPE_PRO_PRICE_ID precisa ser um ID price_ de um preço recorrente ativo.');
     const origin = event.headers.origin || process.env.URL || 'http://localhost:5173';
     const customer = await stripe.customers.create({
       name: data.name,
@@ -17,7 +25,7 @@ export const handler = async (event) => {
       metadata: { customer_type: data.customerType === 'empresa' ? 'empresa' : 'pessoa_fisica', document: data.document, company_name: data.companyName || '' },
     });
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription', customer: customer.id, line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID, quantity: 1 }],
+      mode: 'subscription', customer: customer.id, line_items: [{ price: priceId, quantity: 1 }],
       billing_address_collection: 'required', customer_update: { address: 'auto', name: 'auto' },
       tax_id_collection: { enabled: data.customerType === 'empresa' }, allow_promotion_codes: true,
       success_url: `${origin}/admin?checkout=success`, cancel_url: `${origin}/?checkout=cancelled`,
