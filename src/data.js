@@ -1,6 +1,6 @@
 export const demoStore = {
   id: 'demo', slug: 'marmitaria-da-fatima', published: true, globalPrice: 24.9, priceType: 'global',
-  navbar: { logoUrl: '', brand: 'Marmitaria da Fátima', hours: 'Aberto hoje · 10h às 14h', deliveryInfo: 'Entrega na região central · taxa a partir de R$ 4', links: { cardapio: true, sobre: true, pedidos: true, instagramUrl: '' } },
+  navbar: { logoUrl: '/default-logo.svg', brand: 'Marmitaria da Fátima', hours: 'Aberto hoje · 10h às 14h', deliveryInfo: 'Entrega na região central · taxa a partir de R$ 4', links: { cardapio: true, sobre: true, pedidos: true, instagramUrl: '' } },
   hero: { imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80', message: 'Cardápio do dia feito com carinho. Peça pelo WhatsApp e receba em {local}.', deliveryLocation: 'sua casa', whatsappNumber: '5511999999999' },
   about: { description: 'Comida caseira, preparada todos os dias com ingredientes frescos e muito carinho.', location: 'Rua das Flores, 123 · Centro', businessHours: 'Segunda a sábado, 10h às 14h', contact: '(11) 99999-9999' }, pricingPlan: 'basic'
 };
