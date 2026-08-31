@@ -1,0 +1,12 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import '@material/web/button/filled-button.js';
+import '@material/web/button/outlined-button.js';
+import '@material/web/textfield/filled-text-field.js';
+import '@material/web/checkbox/checkbox.js';
+import '@material/web/progress/circular-progress.js';
+import '@material/web/iconbutton/icon-button.js';
+import './styles.css';
+import App from './App.jsx';
+createRoot(document.getElementById('root')).render(<BrowserRouter><App /></BrowserRouter>);
