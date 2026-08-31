@@ -20,6 +20,10 @@ Sem variáveis Firebase, o projeto funciona em modo demonstração: crie uma con
 
 Os documentos seguem `users/{uid}`, `stores/{storeId}`, `stores/{storeId}/menuItems/{itemId}` e a subcoleção de curtidas `likes/{deviceId}`. A regra de contador permite apenas um incremento público de `likesCount`; a criação imutável do documento do dispositivo impede repetição no mesmo navegador.
 
+## Plano Pro e Stripe
+
+O botão **Quero o Pro** abre um modal que coleta dados de pessoa física ou empresa (incluindo CPF/CNPJ e endereço). O cartão nunca passa pelo React: a Netlify Function `create-checkout-session` cria uma sessão Stripe Checkout e redireciona para o Stripe hospedar o pagamento. Configure `STRIPE_SECRET_KEY` e `STRIPE_PRO_PRICE_ID` como variáveis de ambiente da Netlify; não coloque a chave secreta no frontend. A função usa `tax_id_collection` para empresas, conforme a documentação do Stripe.
+
 ## Deploy
 
 O [netlify.toml](./netlify.toml) configura `npm run build`, publica `dist` e redireciona qualquer rota para `index.html`, preservando refreshs em `/loja/:slug` e `/admin/*`.
