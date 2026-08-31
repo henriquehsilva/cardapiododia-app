@@ -10,7 +10,7 @@ const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', cur
 const deviceId = () => { let id = localStorage.getItem('cdd-device-id'); if (!id) { id = crypto.randomUUID(); localStorage.setItem('cdd-device-id', id); } return id; };
 const message = (store) => encodeURIComponent(`Olá! Gostaria de fazer um pedido no ${store.navbar.brand || 'cardápio'}.`);
 const validImageUrl = (url) => { const value = String(url || '').trim(); return /^(https?:\/\/|\/)/i.test(value) ? value : ''; };
-const normalizeStore = (value) => value ? ({ ...demoStore, ...value, navbar: { ...demoStore.navbar, ...(value.navbar || {}), logoUrl: validImageUrl(value.navbar?.logoUrl) || demoStore.navbar.logoUrl }, hero: { ...demoStore.hero, ...(value.hero || {}), imageUrl: validImageUrl(value.hero?.imageUrl) || demoStore.hero.imageUrl }, about: { ...demoStore.about, ...(value.about || {}) } }) : value;
+const normalizeStore = (value) => value ? ({ ...demoStore, ...value, priceType: 'unit', navbar: { ...demoStore.navbar, ...(value.navbar || {}), logoUrl: validImageUrl(value.navbar?.logoUrl) || demoStore.navbar.logoUrl }, hero: { ...demoStore.hero, ...(value.hero || {}), imageUrl: validImageUrl(value.hero?.imageUrl) || demoStore.hero.imageUrl }, about: { ...demoStore.about, ...(value.about || {}) } }) : value;
 
 function StorePage({ previewStore, previewItems }) {
   const { slug } = useParams(); const [store, setStore] = useState(previewStore || null); const [items, setItems] = useState(previewItems || []); const [loading, setLoading] = useState(!previewStore);
