@@ -9,13 +9,14 @@ import { demoItems, demoStore, emptyStore } from './data';
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 const deviceId = () => { let id = localStorage.getItem('cdd-device-id'); if (!id) { id = crypto.randomUUID(); localStorage.setItem('cdd-device-id', id); } return id; };
 const message = (store) => encodeURIComponent(`Olá! Gostaria de fazer um pedido no ${store.navbar.brand || 'cardápio'}.`);
+const normalizeStore = (value) => value ? ({ ...demoStore, ...value, navbar: { ...demoStore.navbar, ...(value.navbar || {}), logoUrl: value.navbar?.logoUrl || demoStore.navbar.logoUrl }, hero: { ...demoStore.hero, ...(value.hero || {}), imageUrl: value.hero?.imageUrl || demoStore.hero.imageUrl }, about: { ...demoStore.about, ...(value.about || {}) } }) : value;
 
 function StorePage({ previewStore, previewItems }) {
   const { slug } = useParams(); const [store, setStore] = useState(previewStore || null); const [items, setItems] = useState(previewItems || []); const [loading, setLoading] = useState(!previewStore);
   useEffect(() => {
-    if (previewStore) { setStore(previewStore); setItems(previewItems || []); return; }
-    if (!firebaseEnabled) { if (slug === demoStore.slug) { setStore(demoStore); setItems(demoItems); } setLoading(false); return; }
-    const find = async () => { const r = await getDocs(query(collection(db, 'stores'), where('slug', '==', slug))); if (!r.empty) { const d = r.docs[0]; setStore({ id: d.id, ...d.data() }); return onSnapshot(query(collection(db, 'stores', d.id, 'menuItems'), orderBy('order')), (s) => { setItems(s.docs.map(x => ({ id: x.id, ...x.data() }))); setLoading(false); }); } setLoading(false); };
+    if (previewStore) { setStore(normalizeStore(previewStore)); setItems(previewItems || []); return; }
+    if (!firebaseEnabled) { if (slug === demoStore.slug) { setStore(normalizeStore(demoStore)); setItems(demoItems); } setLoading(false); return; }
+    const find = async () => { const r = await getDocs(query(collection(db, 'stores'), where('slug', '==', slug))); if (!r.empty) { const d = r.docs[0]; setStore(normalizeStore({ id: d.id, ...d.data() })); return onSnapshot(query(collection(db, 'stores', d.id, 'menuItems'), orderBy('order')), (s) => { setItems(s.docs.map(x => ({ id: x.id, ...x.data() }))); setLoading(false); }); } setLoading(false); };
     const unsub = find(); return () => { if (typeof unsub === 'function') unsub(); };
   }, [slug, previewStore, previewItems]);
   const like = async (item) => {
