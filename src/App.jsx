@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { addDoc, collection, doc, getDocs, increment, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, db, firebaseEnabled, googleProvider } from './firebase';
+import { auth, db, firebaseEnabled, googleProvider, storage } from './firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { demoItems, demoStore, emptyStore } from './data';
 
