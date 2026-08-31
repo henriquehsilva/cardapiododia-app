@@ -21,6 +21,11 @@ service cloud.firestore {
           allow update, delete: if false;
         }
       }
+      match /orders/{orderId} {
+        allow create: if true;
+        allow read, update, delete: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+      }
     }
   }
 }
