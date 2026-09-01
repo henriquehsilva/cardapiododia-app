@@ -2,7 +2,16 @@ import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'fire
 import { db, firebaseEnabled } from './firebase';
 
 const safe = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-const orderMessage = ({ brand, chosen, name, phone, address, notes, mapsUrl }) => `🍽️ NOVO PEDIDO - ${brand.toUpperCase()}\n\n📋 ITENS DO PEDIDO\n${chosen.map((item) => `• ${item.quantity}x ${item.name} - ${item.price}`).join('\\n')}\n\n👤 CLIENTE\n${name}\n📞 ${phone}\n\n📍 ENTREGA\n${address}${notes ? `\\n📝 OBSERVAÇÕES: ${notes}` : ''}\n\n🗺️ LOCALIZAÇÃO NO MAPA\n${mapsUrl}\n\n✅ Pedido registrado pelo Cardápio do Dia.`;
+const parsePrice = (value) => Number(String(value || '').replace(/R\$\s?/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+const formatPrice = (value) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(value);
+const orderMessage = ({ brand, chosen, name, phone, address, notes, mapsUrl }) => {
+  const itemLines = chosen.map((item) => {
+    const subtotal = parsePrice(item.price) * item.quantity;
+    return `• ${item.quantity}x ${item.name} — ${formatPrice(subtotal)}`;
+  }).join('\n');
+  const total = chosen.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0);
+  return `🍽️ *NOVO PEDIDO — ${brand.toUpperCase()}*\n\n📋 *ITENS DO PEDIDO*\n${itemLines}\n\n💰 *TOTAL DO PEDIDO: ${formatPrice(total)}*\n\n👤 *CLIENTE*\n${name}\n📞 ${phone}\n\n📍 *ENDEREÇO DE ENTREGA*\n${address}${notes ? `\n\n📝 *OBSERVAÇÕES*\n${notes}` : ''}\n\n🗺️ *LOCALIZAÇÃO NO MAPA*\n${mapsUrl}\n\n✅ Pedido enviado pelo Cardápio do Dia.`;
+};
 const openOrder = (anchor) => {
   if (document.querySelector('.order-modal-backdrop')) return;
   const phone = new URL(anchor.href).pathname.replaceAll('/', '');
