@@ -12,6 +12,9 @@ import './order-modal.js';
 import './gallery-modal.js';
 import './install-prompt.js';
 import App from './App.jsx';
+
+const storeSlug = location.pathname.match(/^\/loja\/([^/]+)/)?.[1];
+if (storeSlug) document.querySelector('link[rel="manifest"]')?.setAttribute('href', `/.netlify/functions/store-manifest?slug=${encodeURIComponent(storeSlug)}`);
 createRoot(document.getElementById('root')).render(<BrowserRouter><App /></BrowserRouter>);
 
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
