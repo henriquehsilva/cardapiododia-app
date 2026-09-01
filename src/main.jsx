@@ -10,5 +10,8 @@ import '@material/web/iconbutton/icon-button.js';
 import './styles.css';
 import './order-modal.js';
 import './gallery-modal.js';
+import './install-prompt.js';
 import App from './App.jsx';
 createRoot(document.getElementById('root')).render(<BrowserRouter><App /></BrowserRouter>);
+
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
