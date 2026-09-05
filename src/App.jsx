@@ -2484,16 +2484,18 @@ function Admin({ user, onLogout }) {
     payment.pixKey = String(payment.pixKey ?? store.pixKey ?? "").trim();
     payment.pixReceiverName = String(payment.pixReceiverName ?? "").trim();
     payment.pixCity = String(payment.pixCity ?? "").trim();
+    const brand = String(store.brand ?? overrides.brand ?? "").trim();
     const normalized = {
       ...store,
       ...overrides,
+      brand,
       payment,
       categories,
-      slug: store.slug || slugify(store.brand),
+      slug: String(store.slug ?? overrides.slug ?? "").trim() || slugify(brand),
       ownerId: user.uid,
       updatedAt: serverTimestamp(),
     };
-    if (!normalized.brand.trim() || !normalized.slug) {
+    if (!brand || !normalized.slug) {
       setSaved("Informe o nome e o endereço da loja antes de salvar.");
       setSaving(false);
       return null;
