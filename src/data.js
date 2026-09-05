@@ -65,31 +65,6 @@ export const demoProducts = [
   },
 ];
 
-const marketplaceSamples = [
-  ["sabor-da-vovo", "Sabor da Vovó", "Marmitas caseiras com aquele gostinho de casa.", "Marmitas", "Curitiba · PR", "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80", "terracotta"],
-  ["burger-da-praca", "Burger da Praça", "Hambúrgueres artesanais e acompanhamentos crocantes.", "Lanches", "Goiânia · GO", "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80", "graphite"],
-  ["doce-afeto", "Doce Afeto", "Doces artesanais para celebrar cada momento.", "Doces", "Recife · PE", "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=900&q=80", "rose"],
-  ["grao-cafe", "Grão Café", "Cafés especiais, salgados e bolos frescos.", "Cafeteria", "Belo Horizonte · MG", "https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80", "terracotta"],
-  ["verde-no-prato", "Verde no Prato", "Refeições vegetarianas leves e cheias de sabor.", "Vegetariano", "Rio de Janeiro · RJ", "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80", "sky"],
-  ["cantina-da-nonna", "Cantina da Nonna", "Massas frescas e molhos preparados diariamente.", "Massas", "São Paulo · SP", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80", "rose"],
-];
-
-export const demoMarketplaceStores = marketplaceSamples.map(
-  ([slug, brand, tagline, category, address, heroImage, palette], index) => ({
-    ...demoStore,
-    id: `market-${index + 1}`,
-    slug,
-    brand,
-    tagline,
-    description: tagline,
-    address,
-    heroImage,
-    palette,
-    categories: [{ id: category.toLowerCase(), name: category }],
-    city: address.split(" · ")[0],
-    state: address.split(" · ")[1],
-  }),
-);
 export const emptyStore = (uid) => ({
   ...demoStore,
   id: undefined,

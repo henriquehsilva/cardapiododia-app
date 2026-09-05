@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import { db, firebaseEnabled } from "./firebase";
-import { demoMarketplaceStores, demoStore } from "./data";
 import BrazilianCityPicker from "./BrazilianCityPicker";
 import { categoryIconType } from "./categoryCatalog";
 import MobileSiteNav from "./MobileSiteNav";
@@ -61,7 +60,7 @@ function Marketplace() {
       } catch {
         // Storage pode ser bloqueado em previews incorporados.
       }
-      setStores([...(saved?.published ? [saved] : []), demoStore, ...demoMarketplaceStores]);
+      setStores(saved?.published ? [saved] : []);
       setLoading(false);
       return () => { document.title = "Cardápio do Dia"; };
     }

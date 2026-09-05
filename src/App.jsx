@@ -33,7 +33,6 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import QRCode from "qrcode";
 import { auth, db, firebaseEnabled, googleProvider, storage } from "./firebase";
 import {
-  demoMarketplaceStores,
   demoProducts,
   demoStore,
   emptyStore,
@@ -760,20 +759,17 @@ function StorePage() {
   useEffect(() => {
     if (!firebaseEnabled) {
       const saved = localStore();
-      const marketplaceStore = demoMarketplaceStores.find(
-        (item) => item.slug === slug,
-      );
       setStore(
         saved?.slug === slug
           ? saved
           : slug === demoStore.slug
             ? demoStore
-            : marketplaceStore || null,
+            : null,
       );
       setProducts(
         saved?.slug === slug
           ? localProducts() || []
-          : slug === demoStore.slug || marketplaceStore
+          : slug === demoStore.slug
             ? demoProducts
             : [],
       );
@@ -2477,9 +2473,21 @@ function Admin({ user, onLogout }) {
   const save = async (overrides = {}, advance = true) => {
     setSaving(true);
     setSaved("");
+    const payment = {
+      ...(store.payment || {}),
+      ...(overrides.payment || {}),
+    };
+    // Keep the payment shape stable for stores created before Pix was added.
+    // Firestore rejects undefined nested values, so always persist strings for
+    // the fields edited in the Pix form.
+    payment.enabled = Boolean(payment.enabled);
+    payment.pixKey = String(payment.pixKey ?? store.pixKey ?? "").trim();
+    payment.pixReceiverName = String(payment.pixReceiverName ?? "").trim();
+    payment.pixCity = String(payment.pixCity ?? "").trim();
     const normalized = {
       ...store,
       ...overrides,
+      payment,
       categories,
       slug: store.slug || slugify(store.brand),
       ownerId: user.uid,
