@@ -1,16 +1,106 @@
 export const demoStore = {
-  id: 'demo', slug: 'marmitaria-da-fatima', published: true, globalPrice: 24.9, priceType: 'unit',
-  pixKey: '',
-  themeColor: '#00838a', city: 'São Paulo', state: 'SP', customDomain: '',
-  categories: [{ id: 'marmitas', name: 'Marmitas' }, { id: 'vegetarianos', name: 'Vegetarianos' }],
-  payment: { enabled: false, pixKey: '', pixReceiverName: 'MARMITARIA DA FATIMA', pixCity: 'SAO PAULO' },
-  navbar: { logoUrl: '/cardapiododia-app-logo.png', brand: 'Marmitaria da Fátima', hours: 'Aberto hoje · 10h às 14h', deliveryInfo: 'Entrega na região central · taxa a partir de R$ 4', links: { cardapio: true, sobre: true, pedidos: true, instagramUrl: '' } },
-  hero: { imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80', message: 'Cardápio do dia feito com carinho. Peça pelo WhatsApp e receba em {local}.', deliveryLocation: 'sua casa', whatsappNumber: '5511999999999' },
-  about: { description: 'Comida caseira, preparada todos os dias com ingredientes frescos e muito carinho.', location: 'Rua das Flores, 123 · Centro', businessHours: 'Segunda a sábado, 10h às 14h', contact: '(11) 99999-9999' }, pricingPlan: 'basic'
+  id: "demo",
+  slug: "marmitaria-da-fatima",
+  published: true,
+  brand: "Marmitaria da Fátima",
+  tagline: "Comida caseira feita com carinho todos os dias.",
+  description: "Marmitas, pratos executivos, bebidas e sobremesas preparados diariamente.",
+  heroImage:
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1500&q=85",
+  logoUrl: "",
+  whatsapp: "5511999999999",
+  instagram: "achadinhosdaana",
+  address: "São Paulo · SP",
+  city: "São Paulo",
+  state: "SP",
+  latitude: -23.5505,
+  longitude: -46.6333,
+  hours: "Seg–Sáb · 9h às 18h",
+  palette: "sky",
+  categories: [
+    { id: "marmitas", name: "Marmitas" },
+    { id: "executivos", name: "Executivos" },
+    { id: "bebidas", name: "Bebidas" },
+  ],
+  payment: {
+    enabled: true,
+    pixKey: "11999999999",
+    pixReceiverName: "ANA SILVA",
+    pixCity: "SAO PAULO",
+  },
 };
-export const demoItems = [
-  { id: '1', name: 'Frango grelhado', category: 'Marmitas', categoryId: 'marmitas', description: 'Arroz, feijão, salada e legumes da estação.', imageUrl: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80', imageUrls: ['https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80'], price: 24.9, stock: 18, likesCount: 18, order: 1 },
-  { id: '2', name: 'Carne de panela', category: 'Marmitas', categoryId: 'marmitas', description: 'Cozida lentamente, com arroz, feijão e farofa.', imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80', imageUrls: ['https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80'], price: 24.9, stock: 12, likesCount: 27, order: 2 },
-  { id: '3', name: 'Opção vegetariana', category: 'Vegetarianos', categoryId: 'vegetarianos', description: 'Abóbora assada, grão-de-bico e arroz integral.', imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80', imageUrls: ['https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80'], price: 24.9, stock: 8, likesCount: 11, order: 3 },
+export const demoProducts = [
+  {
+    id: "1",
+    name: "Frango grelhado",
+    category: "Marmitas",
+    categoryId: "marmitas",
+    description: "Arroz, feijão, salada e legumes da estação.",
+    price: 24.9,
+    cashbackPercent: 10,
+    stock: 8,
+    unavailable: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: "2",
+    name: "Carne de panela",
+    category: "Executivos",
+    categoryId: "executivos",
+    description: "Cozida lentamente, com arroz, feijão e farofa.",
+    price: 27.9,
+    stock: 5,
+    unavailable: false,
+    imageUrl:
+      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
+  },
+  {
+    id: "3",
+    name: "Suco natural",
+    category: "Bebidas",
+    categoryId: "bebidas",
+    description: "Preparado na hora com frutas frescas.",
+    price: 8.5,
+    stock: 0,
+    unavailable: true,
+    imageUrl:
+      "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80",
+  },
 ];
-export const emptyStore = (ownerId = '') => ({ ...demoStore, id: undefined, ownerId, slug: '', published: false, navbar: { ...demoStore.navbar, brand: '' }, hero: { ...demoStore.hero }, about: { ...demoStore.about, description: '', location: '', businessHours: '', contact: '' } });
+
+const marketplaceSamples = [
+  ["sabor-da-vovo", "Sabor da Vovó", "Marmitas caseiras com aquele gostinho de casa.", "Marmitas", "Curitiba · PR", "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80", "terracotta"],
+  ["burger-da-praca", "Burger da Praça", "Hambúrgueres artesanais e acompanhamentos crocantes.", "Lanches", "Goiânia · GO", "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80", "graphite"],
+  ["doce-afeto", "Doce Afeto", "Doces artesanais para celebrar cada momento.", "Doces", "Recife · PE", "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=900&q=80", "rose"],
+  ["grao-cafe", "Grão Café", "Cafés especiais, salgados e bolos frescos.", "Cafeteria", "Belo Horizonte · MG", "https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80", "terracotta"],
+  ["verde-no-prato", "Verde no Prato", "Refeições vegetarianas leves e cheias de sabor.", "Vegetariano", "Rio de Janeiro · RJ", "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80", "sky"],
+  ["cantina-da-nonna", "Cantina da Nonna", "Massas frescas e molhos preparados diariamente.", "Massas", "São Paulo · SP", "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=80", "rose"],
+];
+
+export const demoMarketplaceStores = marketplaceSamples.map(
+  ([slug, brand, tagline, category, address, heroImage, palette], index) => ({
+    ...demoStore,
+    id: `market-${index + 1}`,
+    slug,
+    brand,
+    tagline,
+    description: tagline,
+    address,
+    heroImage,
+    palette,
+    categories: [{ id: category.toLowerCase(), name: category }],
+    city: address.split(" · ")[0],
+    state: address.split(" · ")[1],
+  }),
+);
+export const emptyStore = (uid) => ({
+  ...demoStore,
+  id: undefined,
+  slug: "",
+  brand: "",
+  ownerId: uid,
+  published: false,
+  categories: [],
+  payment: { enabled: false, pixKey: "", pixReceiverName: "", pixCity: "" },
+});
