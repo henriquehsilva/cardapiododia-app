@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { firebaseAdmin, json } from "./_firebase.js";
-import { releaseOrderStock } from "./_inventory.js";
 
 const supportedEvents = [
   "checkout.session.completed",
@@ -27,7 +26,7 @@ export default async function (request) {
     const admin = firebaseAdmin();
     const firestore = admin.firestore();
     const orderRef = firestore.doc(`stores/${storeId}/orders/${orderId}`);
-    const shouldReleaseStock = await firestore.runTransaction(async (transaction) => {
+    await firestore.runTransaction(async (transaction) => {
       const order = await transaction.get(orderRef);
       if (!order.exists) return;
       const data = order.data();
@@ -95,8 +94,6 @@ export default async function (request) {
       });
       return false;
     });
-    if (shouldReleaseStock)
-      await releaseOrderStock({ firestore, orderRef });
     return json(200, { received: true });
   } catch (error) {
     console.error(error);

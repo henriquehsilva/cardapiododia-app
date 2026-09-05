@@ -73,7 +73,7 @@ export async function generatePeriodPdf({ store, orders, start, end, appUrl }) {
   autoTable(doc, {
     startY: 68,
     margin: { left: 14, right: 14, bottom: 20 },
-    head: [["Data", "Comprador", "Itens vendidos", "Pagamento", "Valor"]],
+    head: [["Data", "Cliente", "Pratos", "Pagamento", "Valor"]],
     body: orders.map((order) => [
       shortDate(order.paidAt || order.createdAt),
       [
@@ -85,8 +85,7 @@ export async function generatePeriodPdf({ store, orders, start, end, appUrl }) {
         .join("\n"),
       (order.items || [])
         .map(
-          (item) =>
-            `${item.quantity}x ${item.name} (${brl(item.unitPrice)} un.)`,
+          (item) => `${Number(item.quantity || 1)}x ${item.name} (${brl(item.unitPrice)} un.)`,
         )
         .join("\n") || "—",
       order.provider === "pix" ? "Pix" : "Cartão / Stripe",

@@ -57,10 +57,10 @@ const money = (value) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     Number(value) || 0,
   );
-const BagIcon = () => (
-  <svg className="bag-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M5 8.5h14l-1 12H6l-1-12Z" />
-    <path d="M9 10V7a3 3 0 0 1 6 0v3" />
+const TableIcon = () => (
+  <svg className="table-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 8h16v5H4Z" />
+    <path d="M7 13v7M17 13v7M3 20h6M15 20h6" />
   </svg>
 );
 const WhatsAppIcon = () => (
@@ -150,13 +150,7 @@ const productImages = (product) =>
       ? [product.imageUrl]
       : ["https://placehold.co/800x600/eaf6fc/247da9?text=Prato"];
 const productUnavailable = (product) =>
-  product.unavailable === true ||
-  product.active === false ||
-  (product.stock !== undefined && Number(product.stock) <= 0);
-const productStock = (product) =>
-  product.stock === undefined || product.stock === null || product.stock === ""
-    ? Infinity
-    : Math.max(0, Math.floor(Number(product.stock) || 0));
+  product.unavailable === true || product.active === false;
 const percentageNumber = (value) =>
   Number(String(value ?? "").replace(",", "."));
 const productDiscount = (product) =>
@@ -362,7 +356,7 @@ function Landing() {
             <p className="eyebrow">SITE PARA QUEM FAZ COMIDA</p>
             <h1>Seu cardápio online, bonito e pronto para receber pedidos.</h1>
             <p>
-              Publique seus pratos, controle o estoque do dia e receba pedidos
+              Publique seus pratos, controle a disponibilidade e receba pedidos
               por Pix, cartão, WhatsApp ou pagamento na entrega.
             </p>
             <Link className="button primary" to="/admin">
@@ -632,11 +626,11 @@ function Phone() {
       <div className="phone-bar" />
       <div className="phone-image" />
       <div className="phone-copy">
-        <small>ACHADINHOS DA ANA</small>
-        <h3>Coisas bonitas para o seu dia.</h3>
+        <small>MARMITARIA DA FÁTIMA</small>
+        <h3>Comida caseira feita com carinho.</h3>
         <div className="mini-product">
-          <span>Bolsa urbana</span>
-          <b>R$ 129,90</b>
+          <span>Frango grelhado</span>
+          <b>R$ 24,90</b>
         </div>
         <button>Pedir agora</button>
       </div>
@@ -800,7 +794,7 @@ function StorePage() {
         return;
       }
       setStore({ id: d.id, ...d.data() });
-      unsub = onSnapshot(collection(db, "stores", d.id, "products"), (snap) => {
+      unsub = onSnapshot(collection(db, "stores", d.id, "menuItems"), (snap) => {
         setProducts(snap.docs.map((x) => ({ id: x.id, ...x.data() })));
         setLoading(false);
       });
@@ -938,19 +932,11 @@ function StorePage() {
   const displayed = filtered.slice(0, visibleLimit);
   useEffect(() => setVisibleLimit(12), [search, activeCategory]);
   useEffect(() => {
-    setCart((current) =>
-      Object.fromEntries(
-        Object.entries(current).map(([productId, quantity]) => {
-          const product = products.find((item) => item.id === productId);
-          return [
-            productId,
-            product
-              ? Math.min(Number(quantity) || 0, productStock(product))
-              : 0,
-          ];
-        }),
-      ),
-    );
+    setCart((current) => Object.fromEntries(
+      Object.entries(current)
+        .filter(([productId]) => products.some((item) => item.id === productId))
+        .map(([productId, quantity]) => [productId, Math.max(1, Number(quantity) || 1)]),
+    ));
   }, [products]);
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -966,23 +952,20 @@ function StorePage() {
     return () => observer.disconnect();
   }, [displayed.length, filtered.length]);
   const count = purchasable.reduce(
-    (sum, product) => sum + (cart[product.id] || 0),
+    (sum, product) => sum + (Number(cart[product.id]) || 0),
     0,
   );
   const total = purchasable.reduce(
-    (sum, p) => sum + (cart[p.id] || 0) * productCheckoutPrice(p),
+    (sum, product) => sum + (Number(cart[product.id]) || 0) * productCheckoutPrice(product),
     0,
   );
-  const change = (p, delta) =>
-    setCart((c) => ({
-      ...c,
-      [p.id]: productUnavailable(p)
-        ? 0
-        : Math.min(
-            productStock(p),
-            Math.max(0, (c[p.id] || 0) + delta),
-          ),
-    }));
+  const change = (product, delta) => setCart((current) => {
+    const next = { ...current };
+    const quantity = Math.max(0, Math.min(99, (Number(current[product.id]) || 0) + delta));
+    if (quantity && !productUnavailable(product)) next[product.id] = quantity;
+    else delete next[product.id];
+    return next;
+  });
   const payOnDelivery = async () => {
     if (!count) return;
     const validationError = customerError(customer);
@@ -1003,11 +986,8 @@ function StorePage() {
       } else {
         orderId = crypto.randomUUID();
         const orderItems = selected.map((product) => ({ productId: product.id, name: product.name, quantity: cart[product.id], unitPrice: productCheckoutPrice(product) }));
-        const order = { id: orderId, customer: normalizeCustomer(customer), provider: "delivery", paymentMethod: "card_on_delivery", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: orderItems, stockReserved: true, stockReservations: orderItems.map(({ productId, quantity }) => ({ productId, quantity })) };
+        const order = { id: orderId, customer: normalizeCustomer(customer), provider: "delivery", paymentMethod: "pay_on_delivery", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: orderItems };
         safeStorageSet("cdd-orders", JSON.stringify([order, ...(readStoredJson("cdd-orders") || [])]));
-        const updatedProducts = products.map((product) => cart[product.id] && Number.isFinite(productStock(product)) ? { ...product, stock: Math.max(0, productStock(product) - cart[product.id]) } : product);
-        setProducts(updatedProducts);
-        saveLocal(store, updatedProducts);
       }
       setDeliveryOrder({ id: orderId, total: confirmedTotal });
       setCart({});
@@ -1123,7 +1103,7 @@ function StorePage() {
         <div>
           <span>{store.hours}</span>
           <button className="cart-button" onClick={() => setCartOpen(true)}>
-            <BagIcon /><span>Sacola</span><b>{count}</b>
+            <TableIcon /><span>Mesa</span><b>{count}</b>
           </button>
         </div>
         <label className="store-mobile-search">
@@ -1203,7 +1183,7 @@ function StorePage() {
                 key={product.id}
                 store={store}
                 product={product}
-                quantity={cart[product.id] || 0}
+                quantity={Number(cart[product.id]) || 0}
                 onChange={change}
               />
             ))}
@@ -1263,7 +1243,7 @@ function StorePage() {
       <nav className="store-app-nav" aria-label="Atalhos da loja">
         <a href={`https://wa.me/${String(store.whatsapp || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Conheci a ${store.brand} pelo site e gostaria de mais informações.`)}`} target="_blank" rel="noreferrer" className={!store.whatsapp ? "disabled" : ""} aria-label="Abrir WhatsApp"><WhatsAppIcon /><span>WhatsApp</span></a>
         <a href={instagramHandle(store.instagram) ? `https://instagram.com/${instagramHandle(store.instagram)}` : undefined} target="_blank" rel="noreferrer" className={!instagramHandle(store.instagram) ? "disabled" : ""} aria-label="Abrir Instagram"><InstagramIcon /><span>Instagram</span></a>
-        <button onClick={() => setCartOpen(true)} aria-label={`Abrir sacola com ${count} itens`}><span className="app-bag-wrap"><BagIcon />{count > 0 && <b>{count}</b>}</span><span>Sacola</span></button>
+        <button onClick={() => setCartOpen(true)} aria-label={`Abrir mesa com ${count} pratos`}><span className="app-bag-wrap"><TableIcon />{count > 0 && <b>{count}</b>}</span><span>Mesa</span></button>
       </nav>
       {showInstall && (
         <aside className="install-app-card" role="dialog" aria-label={`Instalar aplicativo ${store.brand}`}>
@@ -1279,7 +1259,7 @@ function StorePage() {
       )}
       {count > 0 && (
         <button className="floating-cart" onClick={() => setCartOpen(true)}>
-          <BagIcon /><span>Ver sacola</span><strong>{money(total)}</strong>
+          <TableIcon /><span>Ver mesa</span><strong>{money(total)}</strong>
         </button>
       )}
       {cartOpen && (
@@ -1293,33 +1273,20 @@ function StorePage() {
             <button className="modal-close" onClick={() => setCartOpen(false)}>
               ×
             </button>
-            <p className="eyebrow">SUA COMPRA</p>
-            <h2>Revise sua sacola</h2>
+            <p className="eyebrow">SEU PEDIDO</p>
+            <h2>Revise sua mesa</h2>
             {purchasable
               .filter((p) => cart[p.id])
               .map((p) => (
                 <div className="cart-row" key={p.id}>
                   <div>
                     <b>{p.name}</b>
-                    <small>{money(productCheckoutPrice(p))} cada</small>
-                    {(cart[p.id] || 0) >= productStock(p) && (
-                      <small className="stock-limit-message">
-                        Limite do estoque atingido
-                      </small>
-                    )}
+                    <small>{money(productCheckoutPrice(p))} por prato</small>
                   </div>
                   <div className="quantity">
-                    <button onClick={() => change(p, -1)}>−</button>
+                    <button onClick={() => change(p, -1)} aria-label={`Remover um ${p.name}`}>−</button>
                     <span>{cart[p.id]}</span>
-                    <button
-                      disabled={(cart[p.id] || 0) >= productStock(p)}
-                      onClick={() => change(p, 1)}
-                      aria-label={
-                        (cart[p.id] || 0) >= productStock(p)
-                          ? "Quantidade máxima disponível"
-                          : "Adicionar uma unidade"
-                      }
-                    >+</button>
+                    <button onClick={() => change(p, 1)} aria-label={`Adicionar mais um ${p.name}`}>+</button>
                   </div>
                 </div>
               ))}
@@ -1807,18 +1774,6 @@ function ProductCard({ store, product, quantity, onChange }) {
               </span>
             </div>
           )}
-          {Number.isFinite(productStock(product)) && !productUnavailable(product) && (
-            <small className="product-stock">
-              {productStock(product)} {productStock(product) === 1
-                ? "unidade disponível"
-                : "unidades disponíveis"}
-            </small>
-          )}
-          {quantity > 0 && quantity >= productStock(product) && (
-            <small className="stock-limit-message">
-              Limite do estoque atingido
-            </small>
-          )}
           <div className="product-bottom">
             <div className="product-price">
               {productDiscount(product) > 0 && (
@@ -1832,21 +1787,11 @@ function ProductCard({ store, product, quantity, onChange }) {
               <div className="add-product-action">
                 {quantity ? (
                   <div className="quantity">
-                    <button onClick={() => onChange(product, -1)}>−</button>
+                    <button onClick={() => onChange(product, -1)} aria-label={`Remover um ${product.name}`}>−</button>
                     <span>{quantity}</span>
-                    <button
-                      disabled={quantity >= productStock(product)}
-                      onClick={() => onChange(product, 1)}
-                      aria-label={
-                        quantity >= productStock(product)
-                          ? "Quantidade máxima disponível"
-                          : "Adicionar uma unidade"
-                      }
-                    >+</button>
+                    <button onClick={() => onChange(product, 1)} aria-label={`Adicionar mais um ${product.name}`}>+</button>
                   </div>
-                ) : (
-                  <button onClick={addWithCelebration}>Adicionar</button>
-                )}
+                ) : <button onClick={addWithCelebration}>Adicionar</button>}
                 {celebrationId > 0 && (
                   <span
                     className="add-celebration"
@@ -2196,7 +2141,7 @@ function Admin({ user, onLogout }) {
         else {
           const d = snap.docs[0];
           setStore({ id: d.id, ...d.data() });
-          const p = await getDocs(collection(db, "stores", d.id, "products"));
+          const p = await getDocs(collection(db, "stores", d.id, "menuItems"));
           setProducts(p.docs.map((x) => ({ id: x.id, ...x.data() })));
         }
       })
@@ -2332,7 +2277,7 @@ function Admin({ user, onLogout }) {
   const categories = storeCategories(store, products);
   const adminProducts = products.filter((product) =>
     normalizeSearch(
-      [product.name, product.category, product.stock, product.price].join(" "),
+      [product.name, product.category, product.price].join(" "),
     ).includes(normalizeSearch(productSearch)),
   );
   const filteredOrders = orders.filter((order) => {
@@ -2437,7 +2382,7 @@ function Admin({ user, onLogout }) {
   };
   const refundManualOrder = async (order) => {
     const paid = order.status === "paid";
-    if (!window.confirm(paid ? "Estornar este pedido e devolver os itens ao estoque? A devolução do dinheiro ao cliente deverá ser feita manualmente." : "Cancelar este pedido e devolver os itens ao estoque?")) return;
+    if (!window.confirm(paid ? "Estornar este pedido? A devolução do dinheiro ao cliente deverá ser feita manualmente." : "Cancelar este pedido?")) return;
     setSaving(true);
     setSaved("Estornando pedido…");
     try {
@@ -2447,17 +2392,11 @@ function Admin({ user, onLogout }) {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Não foi possível estornar o pedido.");
       } else {
-        const restoredProducts = products.map((product) => {
-          const reservation = (order.stockReservations || order.items || []).find((item) => item.productId === product.id);
-          return reservation && Number.isFinite(productStock(product)) ? { ...product, stock: productStock(product) + Number(reservation.quantity || 0) } : product;
-        });
-        const updatedOrders = orders.map((item) => item.id === order.id ? { ...item, status: paid ? "refunded" : "cancelled", refundedAt: new Date().toISOString(), stockReleased: true } : item);
-        setProducts(restoredProducts);
+        const updatedOrders = orders.map((item) => item.id === order.id ? { ...item, status: paid ? "refunded" : "cancelled", refundedAt: new Date().toISOString() } : item);
         setOrders(updatedOrders);
-        saveLocal(store, restoredProducts);
         safeStorageSet("cdd-orders", JSON.stringify(updatedOrders));
       }
-      setSaved(paid ? "Pedido estornado e estoque devolvido ✓ Faça a devolução financeira ao cliente." : "Pedido cancelado e itens devolvidos ao estoque ✓");
+      setSaved(paid ? "Pedido estornado ✓ Faça a devolução financeira ao cliente." : "Pedido cancelado ✓");
     } catch (error) { setSaved(error.message); } finally { setSaving(false); }
   };
   const refreshStripeSales = async () => {
@@ -2592,23 +2531,6 @@ function Admin({ user, onLogout }) {
       setTab("products");
       return null;
     }
-    const missingStock = products.find(
-      (product) =>
-        product.stock === "" ||
-        product.stock === undefined ||
-        product.stock === null ||
-        !Number.isInteger(Number(product.stock)) ||
-        Number(product.stock) < 0,
-    );
-    if (missingStock) {
-      setSaved(
-        `Informe a quantidade disponível do prato “${missingStock.name}”.`,
-      );
-      setSaving(false);
-      setTab("products");
-      editProduct(missingStock);
-      return null;
-    }
     let persistedStoreId = store.id || null;
     try {
       if (firebaseEnabled) {
@@ -2631,7 +2553,7 @@ function Admin({ user, onLogout }) {
             category: category?.name || "",
           };
           await setDoc(
-            doc(db, "stores", storeRef.id, "products", productId),
+            doc(db, "stores", storeRef.id, "menuItems", productId),
             productData,
             { merge: true },
           );
@@ -2683,7 +2605,6 @@ function Admin({ user, onLogout }) {
         categoryId: categories[0].id,
         description: "",
         price: 0,
-        stock: 1,
         cashbackPercent: 0,
         unavailable: false,
         active: true,
@@ -2716,16 +2637,6 @@ function Admin({ user, onLogout }) {
     }
     if (!(Number(product.price) > 0)) {
       setSaved("Informe um preço válido para o prato.");
-      return;
-    }
-    if (
-      product.stock === "" ||
-      product.stock === undefined ||
-      product.stock === null ||
-      !Number.isInteger(Number(product.stock)) ||
-      Number(product.stock) < 0
-    ) {
-      setSaved("Informe a quantidade disponível do prato.");
       return;
     }
     if (
@@ -2780,7 +2691,7 @@ function Admin({ user, onLogout }) {
     setProducts((ps) => ps.filter((x) => x.id !== p.id));
     setProductEditor(null);
     if (firebaseEnabled && store.id)
-      await deleteDoc(doc(db, "stores", store.id, "products", p.id));
+      await deleteDoc(doc(db, "stores", store.id, "menuItems", p.id));
   };
   return (
     <div className="admin">
@@ -3058,33 +2969,6 @@ function Admin({ user, onLogout }) {
                         onChange={(value) => changeProductDraft("price", value)}
                       />
                       <label className="field">
-                        <span>Quantidade disponível</span>
-                        <div>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            inputMode="numeric"
-                            value={productEditor.value.stock ?? ""}
-                            placeholder="0"
-                            required
-                            onChange={(event) =>
-                              changeProductDraft(
-                                "stock",
-                                event.target.value === ""
-                                  ? ""
-                                  : Math.max(
-                                      0,
-                                      Math.floor(
-                                        Number(event.target.value) || 0,
-                                      ),
-                                    ),
-                              )
-                            }
-                          />
-                        </div>
-                      </label>
-                      <label className="field">
                         <span>Desconto no site (%)</span>
                         <div>
                           <input
@@ -3174,9 +3058,7 @@ function Admin({ user, onLogout }) {
                         <small>{product.category || "Sem categoria"}</small>
                         <b>{product.name || "Prato sem nome"}</b>
                         <span>
-                          {money(product.price)} · {Number.isFinite(productStock(product))
-                            ? `${productStock(product)} em estoque`
-                            : "Quantidade não definida"}
+                          {money(product.price)}
                           {productDiscount(product) > 0
                             ? ` · ${productDiscount(product)}% de desconto`
                             : ""}
@@ -3384,8 +3266,7 @@ function Admin({ user, onLogout }) {
                               (order.items || []).reduce(
                                 (sum, item) =>
                                   sum +
-                                  Number(item.unitPrice) *
-                                    Number(item.quantity),
+                                  Number(item.unitPrice) * Number(item.quantity || 1),
                                 0,
                               ),
                           )}
@@ -3457,8 +3338,7 @@ function Admin({ user, onLogout }) {
                       <ul>
                         {(order.items || []).map((item) => (
                           <li key={item.productId}>
-                            {item.quantity}× {item.name} —{" "}
-                            {money(item.unitPrice)}
+                            {Number(item.quantity || 1)}× {item.name} — {money(item.unitPrice)}
                           </li>
                         ))}
                       </ul>
@@ -3678,7 +3558,7 @@ function AdminPreview({ store, products }) {
           <header>
             <img src={store.logoUrl || "/default-logo.svg"} alt="" />
             <b>{store.brand || "Sua loja"}</b>
-            <span>Sacola</span>
+            <span>Mesa</span>
           </header>
           <div
             className="preview-cover"

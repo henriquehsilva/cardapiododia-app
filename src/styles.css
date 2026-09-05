@@ -158,8 +158,7 @@ a {
 }
 .phone-image {
   height: 220px;
-  background: url("https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=700&q=80")
-    center/cover;
+  background: url("/default-restaurant-hero.png") center/cover;
 }
 .phone-copy {
   padding: 22px;
@@ -776,7 +775,7 @@ footer {
   background: var(--blue);
   font-size: 0.75rem;
 }
-.bag-icon {
+.table-icon {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
@@ -1218,20 +1217,6 @@ footer {
   outline-offset: 3px;
   border-radius: 2px;
 }
-.product-stock {
-  display: block;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: .72rem;
-  font-weight: 700;
-}
-.stock-limit-message {
-  display: block;
-  margin-top: 5px;
-  color: #9a6500;
-  font-size: .7rem;
-  font-weight: 800;
-}
 .site-discount-message {
   display: grid;
   grid-template-columns: 21px 1fr;
@@ -1255,10 +1240,6 @@ footer {
   stroke-linejoin: round;
 }
 .modal-discount-message { margin: 14px 0 0; font-size: .78rem; }
-.quantity button:disabled {
-  cursor: not-allowed;
-  opacity: .35;
-}
 .product-bottom {
   display: flex;
   align-items: center;
@@ -1483,24 +1464,6 @@ footer {
   font-weight: 800;
   cursor: pointer;
 }
-.quantity {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.quantity button {
-  width: 34px;
-  height: 34px;
-  border: 0;
-  background: var(--pale);
-  font-size: 1.1rem;
-}
-.quantity span {
-  min-width: 30px;
-  text-align: center;
-}
 .about {
   padding: 80px max(7%, calc((100% - 980px) / 2));
   background: var(--pale);
@@ -1580,6 +1543,26 @@ footer {
   display: block;
   color: var(--muted);
   margin-top: 4px;
+}
+.quantity {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.quantity button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: var(--pale);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+.quantity span {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 700;
 }
 .cart-total {
   display: flex;
@@ -4341,10 +4324,6 @@ footer {
   .product-grid.multiple-products .site-discount-message svg {
     width: 16px;
   }
-  .product-grid.multiple-products .product-stock,
-  .product-grid.multiple-products .stock-limit-message {
-    font-size: .62rem;
-  }
   .product-grid.multiple-products .product-bottom {
     align-items: stretch;
     flex-direction: column;
@@ -4359,9 +4338,6 @@ footer {
     width: 100%;
     padding: 8px 6px;
     font-size: .7rem;
-  }
-  .product-grid.multiple-products .quantity {
-    justify-content: space-between;
   }
   .product-grid.multiple-products .zoom-button {
     top: 7px;
@@ -4481,10 +4457,6 @@ footer {
   .products .product-description-modal .modal-discount-message {
     display: grid;
   }
-  .products .product-stock,
-  .products .stock-limit-message,
-  .products .product-grid.multiple-products .product-stock,
-  .products .product-grid.multiple-products .stock-limit-message { font-size: .64rem; }
   .products .product-bottom,
   .products .product-grid.multiple-products .product-bottom {
     align-items: center;
@@ -4504,8 +4476,6 @@ footer {
     font-size: .72rem;
     font-weight: 700;
   }
-  .products .quantity,
-  .products .product-grid.multiple-products .quantity { justify-content: initial; }
   .products .product-photo > .carousel-prev,
   .products .product-photo > .carousel-next,
   .products .product-photo > .carousel-dots,
@@ -4619,7 +4589,6 @@ footer {
     max-height: 2.8em;
     font-size: .68rem;
   }
-  .products .product-stock { display: none; }
   .products .product-bottom,
   .products .product-grid.multiple-products .product-bottom { gap: 7px; padding-top: 7px; }
   .products .product-price b,
@@ -4628,5 +4597,4 @@ footer {
   .products .product-bottom > button,
   .products .product-grid.multiple-products .product-bottom > button,
   .products .add-product-action > button { padding: 7px 9px; font-size: .65rem; }
-  .products .quantity button { width: 28px; height: 28px; }
 }

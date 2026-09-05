@@ -22,8 +22,7 @@ export const orderTotal = (order) =>
   Number(
     order.total ??
       (order.items || []).reduce(
-        (sum, item) =>
-          sum + Number(item.unitPrice || 0) * Number(item.quantity || 0),
+        (sum, item) => sum + Number(item.unitPrice || 0) * Number(item.quantity || 1),
         0,
       ),
   ) || 0;
@@ -50,7 +49,7 @@ export const periodSummary = (orders) =>
       const total = orderTotal(order);
       summary.total += total;
       summary.items += (order.items || []).reduce(
-        (amount, item) => amount + Number(item.quantity || 0),
+        (amount, item) => amount + Number(item.quantity || 1),
         0,
       );
       summary[order.provider === "pix" ? "pix" : "card"] += total;

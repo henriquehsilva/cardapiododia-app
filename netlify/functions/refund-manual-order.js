@@ -1,5 +1,4 @@
 import { firebaseAdmin, json } from "./_firebase.js";
-import { releaseOrderStock } from "./_inventory.js";
 
 export default async function (request) {
   if (request.method !== "POST") return json(405, { error: "Método não permitido." });
@@ -16,7 +15,6 @@ export default async function (request) {
     if (!orderSnap.exists || !["pix", "delivery", "whatsapp", undefined].includes(orderSnap.data().provider)) return json(404, { error: "Pedido não encontrado." });
     const order = orderSnap.data();
     if (["cancelled", "refunded"].includes(order.status)) return json(200, { refunded: true, status: order.status });
-    await releaseOrderStock({ firestore, orderRef });
     const status = order.status === "paid" ? "refunded" : "cancelled";
     await orderRef.update({ status, refundedAt: admin.firestore.FieldValue.serverTimestamp(), refundedBy: user.uid });
     return json(200, { refunded: true, status });

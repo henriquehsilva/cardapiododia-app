@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { firebaseAdmin, json } from "./_firebase.js";
-import { releaseOrderStock } from "./_inventory.js";
 
 export default async function (request) {
   if (request.method !== "POST")
@@ -87,8 +86,6 @@ export default async function (request) {
           changes.status = "pending";
         }
         await order.ref.update(changes);
-        if (session.status === "expired" && data.status !== "paid")
-          await releaseOrderStock({ firestore, orderRef: order.ref });
         updated += 1;
       } catch (error) {
         console.error(

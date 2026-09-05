@@ -37,7 +37,6 @@ export const demoProducts = [
     description: "Arroz, feijão, salada e legumes da estação.",
     price: 24.9,
     cashbackPercent: 10,
-    stock: 8,
     unavailable: false,
     imageUrl:
       "https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=800&q=80",
@@ -49,7 +48,6 @@ export const demoProducts = [
     categoryId: "executivos",
     description: "Cozida lentamente, com arroz, feijão e farofa.",
     price: 27.9,
-    stock: 5,
     unavailable: false,
     imageUrl:
       "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
@@ -61,7 +59,6 @@ export const demoProducts = [
     categoryId: "bebidas",
     description: "Preparado na hora com frutas frescas.",
     price: 8.5,
-    stock: 0,
     unavailable: true,
     imageUrl:
       "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80",

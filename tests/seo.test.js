@@ -8,8 +8,8 @@ test("escapa HTML e remove formatação das descrições de SEO", () => {
 });
 
 test("gera oferta estruturada com preço final e disponibilidade", () => {
-  const schema = productSchema({ baseUrl: "https://cardapiododia.app", store: { slug: "minha-loja", brand: "Minha Loja" }, productId: "p1", product: { name: "Bolsa", price: 100, cashbackPercent: 10, stock: 2, imageUrl: "/foto.jpg" } });
-  assert.equal(schema.offers.price, "90.00");
+  const schema = productSchema({ baseUrl: "https://cardapiododia.app", store: { slug: "meu-restaurante", brand: "Meu Restaurante" }, productId: "p1", product: { name: "Prato executivo", price: 30, cashbackPercent: 10, imageUrl: "/foto.jpg" } });
+  assert.equal(schema.offers.price, "27.00");
   assert.equal(schema.offers.availability, "https://schema.org/InStock");
   assert.match(safeJsonLd({ value: "</script>" }), /\\u003c/);
 });

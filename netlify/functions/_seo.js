@@ -26,8 +26,7 @@ export const productImages = (product, baseUrl) => {
 };
 
 export const productAvailability = (product) =>
-  product.unavailable === true || product.active === false ||
-  (product.stock !== undefined && Number(product.stock) <= 0)
+  product.unavailable === true || product.active === false
     ? "https://schema.org/OutOfStock"
     : "https://schema.org/InStock";
 

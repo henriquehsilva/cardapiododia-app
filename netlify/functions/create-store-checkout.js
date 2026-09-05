@@ -5,7 +5,7 @@ import {
   plainProductDescription,
   validCustomer,
 } from "./_orders.js";
-import { releaseOrderStock, reserveOrderStock } from "./_inventory.js";
+import { createOrder } from './_order-items.js';
 
 export default async function (request) {
   if (request.method !== "POST")
@@ -50,7 +50,7 @@ export default async function (request) {
             : "A Stripe ainda não habilitou cobranças nesta conta da loja.",
       });
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
-    const reservation = await reserveOrderStock({
+    const reservation = await createOrder({
       firestore,
       admin,
       storeId,
@@ -103,14 +103,7 @@ export default async function (request) {
     return json(200, { checkoutUrl: session.url });
   } catch (error) {
     if (reservedOrderRef && reservedFirestore) {
-      try {
-        await releaseOrderStock({
-          firestore: reservedFirestore,
-          orderRef: reservedOrderRef,
-        });
-      } catch (releaseError) {
-        console.error("Falha ao devolver estoque:", releaseError);
-      }
+      await reservedOrderRef.delete().catch(() => {});
     }
     console.error(error);
     return json(400, {

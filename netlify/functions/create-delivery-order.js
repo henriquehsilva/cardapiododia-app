@@ -1,6 +1,6 @@
 import { firebaseAdmin, json } from "./_firebase.js";
 import { cleanCustomer, validCustomer } from "./_orders.js";
-import { reserveOrderStock } from "./_inventory.js";
+import { createOrder } from './_order-items.js';
 
 export default async function (request) {
   if (request.method !== "POST") return json(405, { error: "Método não permitido." });
@@ -14,7 +14,7 @@ export default async function (request) {
     const storeSnap = await firestore.doc(`stores/${storeId}`).get();
     if (!storeSnap.exists || !storeSnap.data()?.published) return json(404, { error: "Loja indisponível." });
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
-    const reservation = await reserveOrderStock({
+    const reservation = await createOrder({
       firestore, admin, storeId, requestedItems: items, orderRef,
       orderData: {
         customer,

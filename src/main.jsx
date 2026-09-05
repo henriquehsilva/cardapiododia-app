@@ -8,7 +8,6 @@ import '@material/web/checkbox/checkbox.js';
 import '@material/web/progress/circular-progress.js';
 import '@material/web/iconbutton/icon-button.js';
 import './styles.css';
-import './order-modal.js';
 import './gallery-modal.js';
 import './install-prompt.js';
 import App from './App.jsx';

@@ -199,7 +199,7 @@ function Marketplace() {
         <Link className="product-logo" to="/"><i>●</i> cardápio<span>do dia</span></Link>
         <label className="market-nav-search">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4 4"/></svg>
-          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar no marketplace" aria-label="Buscar no marketplace" />
+          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar restaurantes ou pratos" aria-label="Buscar restaurantes ou pratos" />
           {search && <button type="button" onClick={() => setSearch("")} aria-label="Limpar busca">×</button>}
         </label>
         <nav><Link to="/doc">Recursos</Link><Link to="/admin/login">Entrar</Link><Link className="button primary small" to="/admin">Criar minha loja</Link></nav>
@@ -223,14 +223,14 @@ function Marketplace() {
           </div>
         </section>
 
-        <section className="market-notifications" aria-live="polite"><div><i>♢</i><span><b>Novidades perto de você</b><small>Receba um aviso quando uma nova loja for publicada.</small></span></div>{notificationPermission === "granted" ? <strong>Notificações ativadas ✓</strong> : notificationPermission === "denied" ? <span className="notification-denied">Notificações bloqueadas no navegador</span> : notificationPermission === "unsupported" ? <span className="notification-denied">Indisponível neste navegador</span> : <button className="button primary small" onClick={enableNotifications}>Ativar notificações</button>}</section>
+        <section className="market-notifications" aria-live="polite"><div><i>♢</i><span><b>Novos sabores perto de você</b><small>Receba um aviso quando um novo restaurante publicar seu cardápio.</small></span></div>{notificationPermission === "granted" ? <strong>Notificações ativadas ✓</strong> : notificationPermission === "denied" ? <span className="notification-denied">Notificações bloqueadas no navegador</span> : notificationPermission === "unsupported" ? <span className="notification-denied">Indisponível neste navegador</span> : <button className="button primary small" onClick={enableNotifications}>Ativar notificações</button>}</section>
 
         <section className="market-directory">
           <div className="market-toolbar">
             <div className="market-filters">
               <label><span>Categoria</span><select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
             </div>
-            <label className="market-sort"><span>Ordenar por</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="name">Nome da loja</option><option value="location">Localização</option></select></label>
+            <label className="market-sort"><span>Ordenar por</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="name">Nome do restaurante</option><option value="location">Localização</option></select></label>
           </div>
           <div className="market-result-head"><div><p className="eyebrow">EXPLORE OS CARDÁPIOS</p><h2>{loading ? "Buscando restaurantes…" : `${filtered.length} ${filtered.length === 1 ? "restaurante encontrado" : "restaurantes encontrados"}`}</h2></div>{(search || category !== "Todas" || locationState) && <button onClick={clear}>Limpar filtros ×</button>}</div>
 
@@ -238,14 +238,14 @@ function Marketplace() {
           {!loading && !error && visible.length > 0 && <div className="market-grid">{visible.map((store, index) => (
             <Link className="market-card" to={`/loja/${store.slug}`} key={store.id || store.slug}>
               <div className="market-card-image" style={{ backgroundImage: `url("${store.heroImage}")` }}><span>{index % 3 === 0 ? "Destaque" : "Cardápio online"}</span></div>
-              <div className="market-card-copy"><div className="market-card-title"><h3>{store.brand}</h3><span aria-label="Loja verificada">✓</span></div><p>{store.tagline || store.description || "Conheça os pratos desta loja."}</p><div className="market-tags">{categoryNames(store).slice(0, 2).map((item) => <b key={item}>{item}</b>)}</div><div className="market-card-meta"><span>⌖ {store.address || "Cardápio online"}</span><span>Retirada ou entrega a combinar</span></div><strong className="market-card-action">Ver loja <span>›</span></strong></div>
+              <div className="market-card-copy"><div className="market-card-title"><h3>{store.brand}</h3><span aria-label="Restaurante verificado">✓</span></div><p>{store.tagline || store.description || "Conheça os pratos deste restaurante."}</p><div className="market-tags">{categoryNames(store).slice(0, 2).map((item) => <b key={item}>{item}</b>)}</div><div className="market-card-meta"><span>⌖ {store.address || "Cardápio online"}</span><span>Retirada ou entrega a combinar</span></div><strong className="market-card-action">Ver cardápio <span>›</span></strong></div>
             </Link>
           ))}</div>}
-          {!loading && !error && visible.length === 0 && <div className="market-empty"><span>⌕</span><b>Nenhuma loja encontrada</b><p>Tente outro termo ou remova os filtros para ampliar sua busca.</p><button className="button outline" onClick={clear}>Limpar busca</button></div>}
+          {!loading && !error && visible.length === 0 && <div className="market-empty"><span>⌕</span><b>Nenhum restaurante encontrado</b><p>Tente outro prato, categoria ou remova os filtros para ampliar sua busca.</p><button className="button outline" onClick={clear}>Limpar busca</button></div>}
 
           {!loading && pages > 1 && <nav className="market-pagination" aria-label="Paginação"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>← Anterior</button><div>{Array.from({ length: pages }, (_, index) => index + 1).map((item) => <button className={page === item ? "active" : ""} aria-current={page === item ? "page" : undefined} onClick={() => setPage(item)} key={item}>{item}</button>)}</div><button disabled={page === pages} onClick={() => setPage((value) => value + 1)}>Próxima →</button></nav>}
         </section>
-        <section className="market-cta"><div><p className="eyebrow">SABORES PERTO DE VOCÊ</p><h2>Quer ver sua loja aqui?</h2><p>Crie sua vitrine, publique seus pratos e seja encontrado por novos clientes.</p></div><Link className="button light" to="/admin">Criar minha loja grátis →</Link></section>
+        <section className="market-cta"><div><p className="eyebrow">SEU RESTAURANTE NO MAPA</p><h2>Quer ver seu cardápio aqui?</h2><p>Publique seus pratos e seja encontrado por novos clientes da sua região.</p></div><Link className="button light" to="/admin">Criar meu cardápio grátis →</Link></section>
       </main>
       <footer className="market-footer"><span>© 2026 Cardápio do Dia</span><Link to="/doc">Conheça os recursos</Link><Link to="/">Página inicial</Link></footer>
       <MobileSiteNav marketplace />

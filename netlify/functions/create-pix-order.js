@@ -1,6 +1,6 @@
 import { firebaseAdmin, json } from "./_firebase.js";
 import { cleanCustomer, validCustomer } from "./_orders.js";
-import { reserveOrderStock } from "./_inventory.js";
+import { createOrder } from './_order-items.js';
 
 export default async function (request) {
   if (request.method !== "POST")
@@ -21,7 +21,7 @@ export default async function (request) {
       return json(404, { error: "Pagamento Pix indisponível." });
 
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
-    const { totalCents } = await reserveOrderStock({
+    const { totalCents } = await createOrder({
       firestore,
       admin,
       storeId,

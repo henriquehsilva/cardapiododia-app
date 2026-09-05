@@ -14,9 +14,6 @@ export const validCustomer = (customer) =>
   customer.phone.length >= 10 &&
   customer.phone.length <= 13;
 
-export const safeQuantity = (value) =>
-  Math.max(1, Math.min(99, Math.floor(Number(value)) || 1));
-
 export const priceInCents = (value) => Math.round(Number(value) * 100);
 
 export const discountPercent = (value) =>
