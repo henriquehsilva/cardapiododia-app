@@ -1,30 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
     match /stores/{storeId} {
-      allow read: if true;
+      allow read: if resource.data.published == true || (request.auth != null && request.auth.uid == resource.data.ownerId);
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
-      match /menuItems/{itemId} {
-        allow read: if true;
+      match /menuItems/{productId} {
+        allow read: if get(/databases/$(database)/documents/stores/$(storeId)).data.published == true
+          || (request.auth != null && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId);
         allow write: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
-        // A visitor can only increase the denormalized counter by one. The like
-        // document below is immutable and makes duplicate device likes fail.
-        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount'])
-          && request.resource.data.likesCount == resource.data.likesCount + 1;
-        match /likes/{deviceId} {
-          allow read: if true;
-          allow create: if true;
-          allow update, delete: if false;
-        }
       }
       match /orders/{orderId} {
-        allow create: if true;
-        allow read, update, delete: if request.auth != null
-          && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+        allow read: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId;
+        allow write: if false;
       }
     }
   }

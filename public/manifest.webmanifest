@@ -1,12 +1,16 @@
 {
+  "id": "/",
   "name": "Cardápio do Dia",
-  "short_name": "Cardápio",
-  "description": "Crie e gerencie o site profissional do seu delivery.",
+  "short_name": "Cardápio do Dia",
+  "description": "Crie seu cardápio digital e receba pedidos por Pix, cartão ou WhatsApp.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "prefer_related_applications": false,
   "background_color": "#ffffff",
-  "theme_color": "#00838a",
+  "theme_color": "#55b8e8",
   "lang": "pt-BR",
   "icons": [
     {
