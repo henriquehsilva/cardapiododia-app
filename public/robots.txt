@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /.netlify/functions/
-
-Sitemap: https://cardapiododia.app/sitemap.xml

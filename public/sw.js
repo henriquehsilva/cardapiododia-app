@@ -1,13 +1,13 @@
-const CACHE = 'cardapio-do-dia-v12';
-const ASSETS = ['/', '/lojas', '/manifest.webmanifest', '/marketplace.webmanifest', '/favicon.png', '/icon-192.png', '/icon-512.png', '/cardapiododia-app-logo.png', '/default-logo.svg'];
+const CACHE_NAME = 'cardapio-do-dia-v1';
+const APP_SHELL = ['/', '/manifest.webmanifest', '/cardapiododia-app-logo.png', '/icon-192.png', '/icon-512.png', '/favicon.png'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))));
   self.clients.claim();
 });
 
@@ -15,16 +15,7 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== location.origin) return;
   event.respondWith(fetch(event.request).then(response => {
     const copy = response.clone();
-    caches.open(CACHE).then(cache => cache.put(event.request, copy));
+    caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
     return response;
-  }).catch(() => caches.match(event.request).then(response => response || (event.request.mode === 'navigate' ? caches.match('/') : Response.error()))));
-});
-
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const destination = event.notification.data?.url || '/lojas';
-  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(openClients => {
-    const existing = openClients.find(client => new URL(client.url).pathname === destination);
-    return existing ? existing.focus() : clients.openWindow(destination);
-  }));
+  }).catch(() => caches.match(event.request).then(cached => cached || (event.request.mode === 'navigate' ? caches.match('/') : Response.error()))));
 });
