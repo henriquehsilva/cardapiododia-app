@@ -22,8 +22,12 @@ export default async function (request) {
     // A valid saved key is enough to keep Pix available. Older store records
     // may contain the key but have an outdated/missing `enabled` flag.
     const pixEnabled = Boolean(pixKey);
-    if (!storeSnap.exists || !store.published || !pixEnabled || !pixKey)
-      return json(404, { error: "Pagamento Pix indisponível." });
+    if (!storeSnap.exists)
+      return json(404, { error: "Loja não encontrada para o pagamento Pix." });
+    if (!store.published)
+      return json(409, { error: "Publique a loja antes de receber pagamentos Pix." });
+    if (!pixEnabled || !pixKey)
+      return json(409, { error: "Cadastre uma chave Pix válida e salve novamente." });
 
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
     const { totalCents } = await createOrder({
