@@ -219,11 +219,13 @@ const normalizeStore = (value = {}) => ({
   instagram: value.instagram || value.navbar?.links?.instagramUrl || "",
   address: value.address || value.about?.location || "",
   hours: value.hours || value.about?.businessHours || value.navbar?.hours || "",
-  payment: value.payment || {
-    enabled: Boolean(value.pixKey),
-    pixKey: value.pixKey || "",
-    pixReceiverName: value.pixReceiverName || "",
-    pixCity: value.pixCity || "",
+  payment: {
+    ...(value.payment || {}),
+    enabled: Boolean(value.payment?.enabled ?? value.pixKey),
+    pixKey: value.payment?.pixKey || value.pixKey || "",
+    pixReceiverName:
+      value.payment?.pixReceiverName || value.pixReceiverName || "",
+    pixCity: value.payment?.pixCity || value.pixCity || "",
   },
 });
 const storeCategories = (store, products = []) => {
@@ -2508,6 +2510,11 @@ function Admin({ user, onLogout }) {
       ...overrides,
       brand,
       payment,
+      // Keep the legacy top-level fields in sync with payment for older
+      // documents and integrations that still read them.
+      pixKey: payment.pixKey,
+      pixReceiverName: payment.pixReceiverName,
+      pixCity: payment.pixCity,
       categories,
       slug: String(store.slug ?? overrides.slug ?? "").trim() || slugify(brand),
       ownerId: user.uid,
