@@ -2287,7 +2287,14 @@ function Admin({ user, onLogout }) {
       </main>
     );
   if (!store) return <main className="center">Abrindo painel…</main>;
-  const update = (key, value) => setStore((s) => ({ ...s, [key]: value }));
+  const update = (key, value) =>
+    setStore((s) => {
+      const [section, field] = String(key).split(".");
+      if (field) {
+        return { ...s, [section]: { ...(s[section] || {}), [field]: value } };
+      }
+      return { ...s, [key]: value };
+    });
   const updatePayment = (key, value) =>
     setStore((s) => ({ ...s, payment: { ...s.payment, [key]: value } }));
   const categories = storeCategories(store, products);
