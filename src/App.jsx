@@ -27,6 +27,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -2582,6 +2583,18 @@ function Admin({ user, onLogout }) {
         persistedStoreId = storeRef.id;
         const { id: ignoredStoreId, ...storeData } = normalized;
         await setDoc(storeRef, storeData, { merge: true });
+        // Write the payment fields explicitly as nested paths as well. This
+        // keeps PIX data intact when a legacy document has a partial payment
+        // object or when another integration updates the same store map.
+        await updateDoc(storeRef, {
+          "payment.enabled": payment.enabled,
+          "payment.pixKey": payment.pixKey,
+          "payment.pixReceiverName": payment.pixReceiverName,
+          "payment.pixCity": payment.pixCity,
+          pixKey: payment.pixKey,
+          pixReceiverName: payment.pixReceiverName,
+          pixCity: payment.pixCity,
+        });
         const savedStore = await getDoc(storeRef);
         if (!savedStore.exists())
           throw new Error("O Firestore não confirmou a criação da loja.");
