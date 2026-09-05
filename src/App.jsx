@@ -208,6 +208,24 @@ const slugify = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+const normalizeStore = (value = {}) => ({
+  ...value,
+  brand: value.brand || value.navbar?.brand || "",
+  tagline: value.tagline || value.hero?.message || "",
+  description: value.description || value.about?.description || "",
+  heroImage: value.heroImage || value.hero?.imageUrl || "",
+  logoUrl: value.logoUrl || value.navbar?.logoUrl || "",
+  whatsapp: value.whatsapp || value.hero?.whatsappNumber || "",
+  instagram: value.instagram || value.navbar?.links?.instagramUrl || "",
+  address: value.address || value.about?.location || "",
+  hours: value.hours || value.about?.businessHours || value.navbar?.hours || "",
+  payment: value.payment || {
+    enabled: Boolean(value.pixKey),
+    pixKey: value.pixKey || "",
+    pixReceiverName: value.pixReceiverName || "",
+    pixCity: value.pixCity || "",
+  },
+});
 const storeCategories = (store, products = []) => {
   const categories = Array.isArray(store?.categories)
     ? store.categories
@@ -758,7 +776,7 @@ function StorePage() {
   const loadMoreRef = useRef(null);
   useEffect(() => {
     if (!firebaseEnabled) {
-      const saved = localStore();
+      const saved = normalizeStore(localStore() || {});
       setStore(
         saved?.slug === slug
           ? saved
@@ -789,7 +807,7 @@ function StorePage() {
         setLoading(false);
         return;
       }
-      setStore({ id: d.id, ...d.data() });
+      setStore(normalizeStore({ id: d.id, ...d.data() }));
       unsub = onSnapshot(collection(db, "stores", d.id, "menuItems"), (snap) => {
         setProducts(snap.docs.map((x) => ({ id: x.id, ...x.data() })));
         setLoading(false);
@@ -2126,7 +2144,7 @@ function Admin({ user, onLogout }) {
   useEffect(() => {
     if (!user) return;
     if (!firebaseEnabled) {
-      setStore(localStore() || emptyStore(user.uid));
+      setStore(normalizeStore(localStore() || emptyStore(user.uid)));
       setProducts(localProducts() || demoProducts);
       setOrders(readStoredJson("cdd-orders") || []);
       return;
@@ -2136,7 +2154,7 @@ function Admin({ user, onLogout }) {
         if (snap.empty) setStore(emptyStore(user.uid));
         else {
           const d = snap.docs[0];
-          setStore({ id: d.id, ...d.data() });
+          setStore(normalizeStore({ id: d.id, ...d.data() }));
           const p = await getDocs(collection(db, "stores", d.id, "menuItems"));
           setProducts(p.docs.map((x) => ({ id: x.id, ...x.data() })));
         }
@@ -2568,18 +2586,20 @@ function Admin({ user, onLogout }) {
             { merge: true },
           );
         }
-        setStore({ id: storeRef.id, ...savedStore.data() });
+        setStore(normalizeStore({ id: storeRef.id, ...savedStore.data() }));
       } else {
         saveLocal(
           { ...normalized, updatedAt: new Date().toISOString() },
           products,
         );
-        setStore(normalized);
+        setStore(normalizeStore(normalized));
       }
       setSaved(
         overrides.published
           ? "Loja publicada com sucesso ✓"
-          : "Alterações salvas ✓",
+          : normalized.published
+            ? "Alterações salvas ✓"
+            : "Rascunho salvo ✓ Publique a loja para exibi-la ao público.",
       );
       if (!overrides.published && advance) {
         const steps = ["store", "categories", "products", "payment", "publish"];
