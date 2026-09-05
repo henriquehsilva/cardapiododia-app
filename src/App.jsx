@@ -1037,6 +1037,7 @@ function StorePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             storeId: store.id,
+            slug: store.slug,
             items,
             customer: normalizeCustomer(customer),
           }),

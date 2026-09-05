@@ -6,17 +6,27 @@ export default async function (request) {
   if (request.method !== "POST")
     return json(405, { error: "Método não permitido." });
   try {
-    const { storeId, items, customer: rawCustomer } = await request.json();
+    const { storeId: requestedStoreId, slug, items, customer: rawCustomer } = await request.json();
     const customer = cleanCustomer(rawCustomer);
-    if (!storeId || !Array.isArray(items) || !items.length)
+    if ((!requestedStoreId && !slug) || !Array.isArray(items) || !items.length)
       return json(400, { error: "Sacola inválida." });
     if (!validCustomer(customer))
       return json(400, { error: "Preencha nome, e-mail e WhatsApp válidos." });
 
     const admin = firebaseAdmin();
     const firestore = admin.firestore();
-    const storeSnap = await firestore.doc(`stores/${storeId}`).get();
-    const store = storeSnap.data() || {};
+    let storeRef = requestedStoreId ? firestore.doc(`stores/${requestedStoreId}`) : null;
+    let storeSnap = storeRef ? await storeRef.get() : null;
+    if ((!storeSnap || !storeSnap.exists) && slug) {
+      const matches = await firestore.collection("stores")
+        .where("slug", "==", String(slug))
+        .where("published", "==", true)
+        .limit(1)
+        .get();
+      storeRef = matches.docs[0]?.ref || null;
+      storeSnap = storeRef ? await storeRef.get() : null;
+    }
+    const store = storeSnap?.data() || {};
     const payment = store.payment || {};
     const pixKey = String(payment.pixKey || store.pixKey || "").trim();
     // A valid saved key is enough to keep Pix available. Older store records
@@ -29,6 +39,7 @@ export default async function (request) {
     if (!pixEnabled || !pixKey)
       return json(409, { error: "Cadastre uma chave Pix válida e salve novamente." });
 
+    const storeId = storeRef.id;
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
     const { totalCents } = await createOrder({
       firestore,
