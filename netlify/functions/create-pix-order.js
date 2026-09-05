@@ -19,7 +19,9 @@ export default async function (request) {
     const store = storeSnap.data() || {};
     const payment = store.payment || {};
     const pixKey = String(payment.pixKey || store.pixKey || "").trim();
-    const pixEnabled = payment.enabled === true || (!Object.prototype.hasOwnProperty.call(payment, "enabled") && Boolean(pixKey));
+    // A valid saved key is enough to keep Pix available. Older store records
+    // may contain the key but have an outdated/missing `enabled` flag.
+    const pixEnabled = Boolean(pixKey);
     if (!storeSnap.exists || !store.published || !pixEnabled || !pixKey)
       return json(404, { error: "Pagamento Pix indisponível." });
 

@@ -1354,7 +1354,9 @@ function StorePage() {
               />
             </div>
             <div className="checkout-methods">
-              {store.payment?.enabled && (
+              {(store.payment?.enabled ||
+                store.payment?.pixKey ||
+                store.pixKey) && (
                 <>
                   <button
                     className="button pix-checkout-button full"
@@ -1394,6 +1396,8 @@ function StorePage() {
               )}
             </div>
             {!store.payment?.enabled &&
+              !store.payment?.pixKey &&
+              !store.pixKey &&
               !store.payment?.stripeConnected &&
               !store.payment?.stripeAccountId && (
                 <a
