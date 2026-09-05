@@ -1,5 +1,5 @@
-const CACHE_NAME = 'cardapio-do-dia-v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/cardapiododia-app-logo.png', '/icon-192.png', '/icon-512.png', '/favicon.png'];
+const CACHE_NAME = 'cardapio-do-dia-v2';
+const APP_SHELL = ['/', '/lojas', '/manifest.webmanifest', '/marketplace.webmanifest', '/cardapiododia-app-logo.png', '/icon-192.png', '/icon-512.png', '/favicon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
