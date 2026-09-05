@@ -32,7 +32,7 @@ export default async function (request) {
     // A valid saved key is enough to keep Pix available. Older store records
     // may contain the key but have an outdated/missing `enabled` flag.
     const pixEnabled = Boolean(pixKey);
-    if (!storeSnap.exists)
+    if (!storeSnap?.exists)
       return json(404, { error: "Loja não encontrada para o pagamento Pix." });
     if (!store.published)
       return json(409, { error: "Publique a loja antes de receber pagamentos Pix." });
