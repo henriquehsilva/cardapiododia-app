@@ -5,8 +5,7 @@ export const demoStore = {
   brand: "Marmitaria da Fátima",
   tagline: "Comida caseira feita com carinho todos os dias.",
   description: "Marmitas, pratos executivos, bebidas e sobremesas preparados diariamente.",
-  heroImage:
-    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1500&q=85",
+  heroImage: "/default-restaurant-hero.png",
   logoUrl: "",
   whatsapp: "5511999999999",
   instagram: "achadinhosdaana",
