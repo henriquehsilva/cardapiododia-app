@@ -16,8 +16,11 @@ export default async function (request) {
     const admin = firebaseAdmin();
     const firestore = admin.firestore();
     const storeSnap = await firestore.doc(`stores/${storeId}`).get();
-    const store = storeSnap.data();
-    if (!storeSnap.exists || !store?.published || !store.payment?.enabled)
+    const store = storeSnap.data() || {};
+    const payment = store.payment || {};
+    const pixKey = String(payment.pixKey || store.pixKey || "").trim();
+    const pixEnabled = payment.enabled === true || (!Object.prototype.hasOwnProperty.call(payment, "enabled") && Boolean(pixKey));
+    if (!storeSnap.exists || !store.published || !pixEnabled || !pixKey)
       return json(404, { error: "Pagamento Pix indisponível." });
 
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();

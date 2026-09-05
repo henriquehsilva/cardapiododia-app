@@ -1013,7 +1013,8 @@ function StorePage() {
   };
   const checkout = async () => {
     if (!count) return;
-    if (!store.payment?.pixKey?.trim()) {
+    const pixKey = String(store.payment?.pixKey || store.pixKey || "").trim();
+    if (!pixKey) {
       setError("A loja ainda não configurou uma chave Pix.");
       return;
     }
@@ -1047,7 +1048,7 @@ function StorePage() {
         orderId = data.orderId;
       }
       const payload = createPixPayload({
-        key: store.payment.pixKey,
+        key: pixKey,
         name: store.payment.pixReceiverName || store.brand,
         city: store.payment.pixCity || store.address,
         amount: confirmedTotal,
