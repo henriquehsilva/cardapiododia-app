@@ -19,10 +19,10 @@ function StoreDemo() {
   return (
     <div className="docs-demo store-demo">
       <div className="demo-browser"><i /><i /><i /><span>cardapiododia.app/loja/seu-restaurante</span></div>
-      <div className="demo-store-head"><b>Sua marca</b><span>⌕ Buscar</span><span>♨ Mesa {inCart ? 1 : 0}</span></div>
+      <div className="demo-store-head"><b>Sua marca</b><span>⌕ Buscar</span><span>♨ Sacola {inCart ? 1 : 0}</span></div>
       <div className="demo-product">
         <div className="demo-product-image">PRATO<br />DO DIA</div>
-        <div><small>MARMITAS</small><h3>Frango grelhado</h3><p>Arroz, feijão, salada fresca e legumes da estação.</p><strong>R$ 24,90</strong><div className="demo-actions"><button onClick={() => setLiked(!liked)}>{liked ? "♥ Curtido" : "♡ Curtir"}</button><button className="demo-add" onClick={() => setInCart(!inCart)}>{inCart ? "✓ Na mesa" : "Adicionar"}</button></div></div>
+        <div><small>MARMITAS</small><h3>Frango grelhado</h3><p>Arroz, feijão, salada fresca e legumes da estação.</p><strong>R$ 24,90</strong><div className="demo-actions"><button onClick={() => setLiked(!liked)}>{liked ? "♥ Curtido" : "♡ Curtir"}</button><button className="demo-add" onClick={() => setInCart(!inCart)}>{inCart ? "✓ Na sacola" : "Adicionar"}</button></div></div>
       </div>
     </div>
   );
@@ -114,7 +114,7 @@ function Docs() {
             </section>
 
             <section className="docs-section" id="checkout">
-              <p className="eyebrow">03 · PEDIDOS E PAGAMENTOS</p><h2>Do cardápio ao pagamento, sem atrito.</h2><p className="docs-lead">O cliente adiciona pratos à mesa, ajusta as quantidades, revisa o pedido e escolhe como concluir.</p>
+              <p className="eyebrow">03 · PEDIDOS E PAGAMENTOS</p><h2>Do cardápio ao pagamento, sem atrito.</h2><p className="docs-lead">O cliente adiciona pratos à sacola, ajusta as quantidades, revisa o pedido e escolhe como concluir.</p>
               <div className="docs-payment-layout"><PaymentDemo /><div className="docs-payment-copy"><article><span>01</span><div><h3>Pix instantâneo</h3><p>O QR Code e o código copia e cola são gerados no navegador. O valor segue diretamente para a chave cadastrada pela loja.</p></div></article><article><span>02</span><div><h3>Cartão pela Stripe</h3><p>O cliente segue para um checkout hospedado e seguro. A pedido volta para o painel com validação automática.</p></div></article><article><span>03</span><div><h3>WhatsApp</h3><p>Uma mensagem pronta leva o resumo dos itens e os dados do cliente para combinar pagamento ou entrega.</p></div></article></div></div>
             </section>
 

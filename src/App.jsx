@@ -810,7 +810,7 @@ function StorePage() {
         setLoading(false);
         return;
       }
-      setStore(normalizeStore({ id: d.id, ...d.data() }));
+      setStore(normalizeStore({ ...d.data(), id: d.id }));
       unsub = onSnapshot(collection(db, "stores", d.id, "menuItems"), (snap) => {
         setProducts(snap.docs.map((x) => ({ id: x.id, ...x.data() })));
         setLoading(false);
@@ -995,7 +995,7 @@ function StorePage() {
       let orderId;
       let confirmedTotal = total;
       if (firebaseEnabled) {
-        const response = await fetch("/.netlify/functions/create-delivery-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: store.id, items, customer: normalizeCustomer(customer) }) });
+        const response = await fetch("/.netlify/functions/create-delivery-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: store.id, slug: store.slug, items, customer: normalizeCustomer(customer) }) });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Não foi possível registrar o pedido.");
         orderId = data.orderId;
@@ -1122,7 +1122,7 @@ function StorePage() {
         <div>
           <span>{store.hours}</span>
           <button className="cart-button" onClick={() => setCartOpen(true)}>
-            <TableIcon /><span>Mesa</span><b>{count}</b>
+            <TableIcon /><span>Sacola</span><b>{count}</b>
           </button>
         </div>
         <label className="store-mobile-search">
@@ -1262,7 +1262,7 @@ function StorePage() {
       <nav className="store-app-nav" aria-label="Atalhos da loja">
         <a href={`https://wa.me/${String(store.whatsapp || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Conheci a ${store.brand} pelo site e gostaria de mais informações.`)}`} target="_blank" rel="noreferrer" className={!store.whatsapp ? "disabled" : ""} aria-label="Abrir WhatsApp"><WhatsAppIcon /><span>WhatsApp</span></a>
         <a href={instagramHandle(store.instagram) ? `https://instagram.com/${instagramHandle(store.instagram)}` : undefined} target="_blank" rel="noreferrer" className={!instagramHandle(store.instagram) ? "disabled" : ""} aria-label="Abrir Instagram"><InstagramIcon /><span>Instagram</span></a>
-        <button onClick={() => setCartOpen(true)} aria-label={`Abrir mesa com ${count} pratos`}><span className="app-bag-wrap"><TableIcon />{count > 0 && <b>{count}</b>}</span><span>Mesa</span></button>
+        <button onClick={() => setCartOpen(true)} aria-label={`Abrir sacola com ${count} pratos`}><span className="app-bag-wrap"><TableIcon />{count > 0 && <b>{count}</b>}</span><span>Sacola</span></button>
       </nav>
       {showInstall && (
         <aside className="install-app-card" role="dialog" aria-label={`Instalar aplicativo ${store.brand}`}>
@@ -1278,7 +1278,7 @@ function StorePage() {
       )}
       {count > 0 && (
         <button className="floating-cart" onClick={() => setCartOpen(true)}>
-          <TableIcon /><span>Ver mesa</span><strong>{money(total)}</strong>
+          <TableIcon /><span>Ver sacola</span><strong>{money(total)}</strong>
         </button>
       )}
       {cartOpen && (
@@ -1293,7 +1293,7 @@ function StorePage() {
               ×
             </button>
             <p className="eyebrow">SEU PEDIDO</p>
-            <h2>Revise sua mesa</h2>
+            <h2>Revise sua sacola</h2>
             {purchasable
               .filter((p) => cart[p.id])
               .map((p) => (
@@ -2163,7 +2163,7 @@ function Admin({ user, onLogout }) {
         if (snap.empty) setStore(emptyStore(user.uid));
         else {
           const d = snap.docs[0];
-          setStore(normalizeStore({ id: d.id, ...d.data() }));
+          setStore(normalizeStore({ ...d.data(), id: d.id }));
           const p = await getDocs(collection(db, "stores", d.id, "menuItems"));
           setProducts(p.docs.map((x) => ({ id: x.id, ...x.data() })));
         }
@@ -2619,7 +2619,7 @@ function Admin({ user, onLogout }) {
             { merge: true },
           );
         }
-        setStore(normalizeStore({ id: storeRef.id, ...savedStore.data() }));
+        setStore(normalizeStore({ ...savedStore.data(), id: storeRef.id }));
       } else {
         saveLocal(
           { ...normalized, updatedAt: new Date().toISOString() },
@@ -3621,7 +3621,7 @@ function AdminPreview({ store, products }) {
           <header>
             <img src={store.logoUrl || "/default-logo.svg"} alt="" />
             <b>{store.brand || "Sua loja"}</b>
-            <span>Mesa</span>
+            <span>Sacola</span>
           </header>
           <div
             className="preview-cover"
