@@ -57,10 +57,10 @@ const money = (value) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     Number(value) || 0,
   );
-const TableIcon = () => (
+const BagIcon = () => (
   <svg className="table-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M4 8h16v5H4Z" />
-    <path d="M7 13v7M17 13v7M3 20h6M15 20h6" />
+    <path d="M5 8h14l1 13H4L5 8Z" />
+    <path d="M9 10V6a3 3 0 0 1 6 0v4" />
   </svg>
 );
 const WhatsAppIcon = () => (
@@ -1122,7 +1122,7 @@ function StorePage() {
         <div>
           <span>{store.hours}</span>
           <button className="cart-button" onClick={() => setCartOpen(true)}>
-            <TableIcon /><span>Sacola</span><b>{count}</b>
+            <BagIcon /><span>Sacola</span><b>{count}</b>
           </button>
         </div>
         <label className="store-mobile-search">
@@ -1262,7 +1262,7 @@ function StorePage() {
       <nav className="store-app-nav" aria-label="Atalhos da loja">
         <a href={`https://wa.me/${String(store.whatsapp || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Conheci a ${store.brand} pelo site e gostaria de mais informações.`)}`} target="_blank" rel="noreferrer" className={!store.whatsapp ? "disabled" : ""} aria-label="Abrir WhatsApp"><WhatsAppIcon /><span>WhatsApp</span></a>
         <a href={instagramHandle(store.instagram) ? `https://instagram.com/${instagramHandle(store.instagram)}` : undefined} target="_blank" rel="noreferrer" className={!instagramHandle(store.instagram) ? "disabled" : ""} aria-label="Abrir Instagram"><InstagramIcon /><span>Instagram</span></a>
-        <button onClick={() => setCartOpen(true)} aria-label={`Abrir sacola com ${count} pratos`}><span className="app-bag-wrap"><TableIcon />{count > 0 && <b>{count}</b>}</span><span>Sacola</span></button>
+        <button onClick={() => setCartOpen(true)} aria-label={`Abrir sacola com ${count} pratos`}><span className="app-bag-wrap"><BagIcon />{count > 0 && <b>{count}</b>}</span><span>Sacola</span></button>
       </nav>
       {showInstall && (
         <aside className="install-app-card" role="dialog" aria-label={`Instalar aplicativo ${store.brand}`}>
@@ -1278,7 +1278,7 @@ function StorePage() {
       )}
       {count > 0 && (
         <button className="floating-cart" onClick={() => setCartOpen(true)}>
-          <TableIcon /><span>Ver sacola</span><strong>{money(total)}</strong>
+          <BagIcon /><span>Ver sacola</span><strong>{money(total)}</strong>
         </button>
       )}
       {cartOpen && (

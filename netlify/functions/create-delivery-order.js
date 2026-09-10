@@ -11,9 +11,9 @@ export default async function (request) {
     if (!validCustomer(customer)) return json(400, { error: "Preencha nome, e-mail e WhatsApp válidos." });
     const admin = firebaseAdmin();
     const firestore = admin.firestore();
-    let storeRef = requestedStoreId ? firestore.doc(`stores/${requestedStoreId}`) : null;
-    let storeSnap = storeRef ? await storeRef.get() : null;
-    if ((!storeSnap || !storeSnap.exists || !storeSnap.data()?.published) && slug) {
+    let storeRef = null;
+    let storeSnap = null;
+    if (slug) {
       const matches = await firestore.collection("stores")
         .where("slug", "==", String(slug))
         .where("published", "==", true)
@@ -21,6 +21,10 @@ export default async function (request) {
         .get();
       storeRef = matches.docs[0]?.ref || null;
       storeSnap = storeRef ? await storeRef.get() : null;
+    }
+    if ((!storeSnap || !storeSnap.exists || !storeSnap.data()?.published) && requestedStoreId) {
+      storeRef = firestore.doc(`stores/${requestedStoreId}`);
+      storeSnap = await storeRef.get();
     }
     if (!storeSnap?.exists || !storeSnap.data()?.published) return json(404, { error: "Loja indisponível." });
     const storeId = storeRef.id;
