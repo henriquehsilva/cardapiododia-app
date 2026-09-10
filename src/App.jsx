@@ -1391,7 +1391,7 @@ function StorePage() {
                   </svg>
                   <span>
                     <b>{paying ? "Abrindo Stripe…" : "Cartão de crédito"}</b>
-                    <small>Pagamento seguro pela Stripe</small>
+                    <small>À vista ou parcelado pela Stripe</small>
                   </span>
                 </button>
               )}

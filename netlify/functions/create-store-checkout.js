@@ -85,6 +85,11 @@ export default async function (request) {
       {
         mode: "payment",
         payment_method_types: ["card"],
+        payment_method_options: {
+          card: {
+            installments: { enabled: true },
+          },
+        },
         line_items: lineItems,
         success_url: `${origin}/loja/${store.slug}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/loja/${store.slug}?payment=cancelled`,
