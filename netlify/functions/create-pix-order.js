@@ -1,6 +1,7 @@
 import { firebaseAdmin, json } from "./_firebase.js";
 import { cleanCustomer, validCustomer } from "./_orders.js";
 import { createOrder } from './_order-items.js';
+import { randomUUID } from 'node:crypto';
 
 export default async function (request) {
   if (request.method !== "POST")
@@ -41,6 +42,7 @@ export default async function (request) {
 
     const storeId = storeRef.id;
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
+    const trackingToken = randomUUID();
     const { totalCents } = await createOrder({
       firestore,
       admin,
@@ -51,9 +53,10 @@ export default async function (request) {
         customer,
         status: "pending_confirmation",
         provider: "pix",
+        trackingToken,
       },
     });
-    return json(200, { orderId: orderRef.id, total: totalCents / 100 });
+    return json(200, { orderId: orderRef.id, total: totalCents / 100, trackingToken });
   } catch (error) {
     console.error(error);
     return json(400, {

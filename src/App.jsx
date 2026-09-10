@@ -994,20 +994,23 @@ function StorePage() {
       const selected = purchasable.filter((product) => cart[product.id]);
       const items = selected.map((product) => ({ id: product.id, quantity: cart[product.id] }));
       let orderId;
+      let trackingToken;
       let confirmedTotal = total;
       if (firebaseEnabled) {
         const response = await fetch("/.netlify/functions/create-delivery-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: store.id, slug: store.slug, items, customer: normalizeCustomer(customer) }) });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Não foi possível registrar o pedido.");
         orderId = data.orderId;
+        trackingToken = data.trackingToken;
         confirmedTotal = Number(data.total);
       } else {
         orderId = crypto.randomUUID();
+        trackingToken = crypto.randomUUID();
         const orderItems = selected.map((product) => ({ productId: product.id, name: product.name, quantity: cart[product.id], unitPrice: productCheckoutPrice(product) }));
-        const order = { id: orderId, customer: normalizeCustomer(customer), provider: "delivery", paymentMethod: "pay_on_delivery", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: orderItems };
+        const order = { id: orderId, customer: normalizeCustomer(customer), provider: "delivery", paymentMethod: "pay_on_delivery", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: orderItems, trackingToken };
         safeStorageSet("cdd-orders", JSON.stringify([order, ...(readStoredJson("cdd-orders") || [])]));
       }
-      setDeliveryOrder({ id: orderId, total: confirmedTotal });
+      setDeliveryOrder({ id: orderId, total: confirmedTotal, trackingPath: `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}` });
       setCart({});
       setCartOpen(false);
     } catch (err) { setError(err.message); } finally { setPaying(false); }
@@ -1120,6 +1123,8 @@ function StorePage() {
     try {
       let confirmedTotal = total;
       let orderId = "";
+      let trackingToken = "";
+      let localItems = [];
       const items = purchasable
         .filter((product) => cart[product.id])
         .map((product) => ({ id: product.id, quantity: cart[product.id] }));
@@ -1139,6 +1144,13 @@ function StorePage() {
           throw new Error(data.error || "Não foi possível criar o pedido Pix.");
         confirmedTotal = Number(data.total);
         orderId = data.orderId;
+        trackingToken = data.trackingToken;
+      } else {
+        orderId = crypto.randomUUID();
+        trackingToken = crypto.randomUUID();
+        localItems = purchasable.filter((product) => cart[product.id]).map((product) => ({ productId: product.id, name: product.name, quantity: cart[product.id], unitPrice: productCheckoutPrice(product) }));
+        const order = { id: orderId, customer: normalizeCustomer(customer), provider: "pix", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: localItems, trackingToken };
+        safeStorageSet("cdd-orders", JSON.stringify([order, ...(readStoredJson("cdd-orders") || [])]));
       }
       const payload = createPixPayload({
         key: pixKey,
@@ -1151,7 +1163,7 @@ function StorePage() {
         margin: 2,
         color: { dark: "#12202d", light: "#ffffff" },
       });
-      setPixPayment({ payload, qrCode, total: confirmedTotal, orderId });
+      setPixPayment({ payload, qrCode, total: confirmedTotal, orderId, trackingPath: `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}` });
       setCartOpen(false);
     } catch (err) {
       setError(
@@ -1520,7 +1532,7 @@ function StorePage() {
           onClose={() => setPixPayment(null)}
         />
       )}
-      {deliveryOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setDeliveryOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Combinado! Você paga ao receber.</h2><p>A loja recebeu seu pedido. O pagamento será feito no momento da entrega ou retirada.</p><strong>{money(deliveryOrder.total)} · à vista</strong><small>Pedido {deliveryOrder.id.slice(0, 8).toUpperCase()}</small><button className="button primary full" onClick={() => setDeliveryOrder(null)}>Continuar na loja</button></section></div>}
+      {deliveryOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setDeliveryOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Combinado! Você paga ao receber.</h2><p>A loja recebeu seu pedido. O pagamento será feito no momento da entrega ou retirada.</p><strong>{money(deliveryOrder.total)} · à vista</strong><small>Pedido {deliveryOrder.id.slice(0, 8).toUpperCase()}</small><Link className="button primary full" to={deliveryOrder.trackingPath}>Acompanhar pedido</Link><button className="button outline full" onClick={() => setDeliveryOrder(null)}>Continuar na loja</button></section></div>}
       {whatsappOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setWhatsappOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Seu pedido está pronto para confirmação.</h2><p>Envie o resumo à loja e acompanhe as atualizações pelo seu código.</p><strong>{money(whatsappOrder.total)}</strong><small>Pedido {whatsappOrder.id.slice(0, 8).toUpperCase()}</small><a className="button primary full" href={whatsappOrder.whatsappUrl} target="_blank" rel="noreferrer">Enviar pedido à loja</a><Link className="button outline full" to={whatsappOrder.trackingPath}>Acompanhar pedido</Link></section></div>}
     </div>
   );
@@ -1617,6 +1629,7 @@ function PixModal({ store, total, payment, onClose }) {
         >
           Enviar comprovante pelo WhatsApp
         </a>
+        {payment.trackingPath && <Link className="button outline full" to={payment.trackingPath}>Acompanhar pedido</Link>}
       </section>
     </div>
   );
