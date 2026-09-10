@@ -14,6 +14,14 @@ export const validCustomer = (customer) =>
   customer.phone.length >= 10 &&
   customer.phone.length <= 13;
 
+export const cleanLocation = (location) => {
+  const latitude = Number(location?.latitude);
+  const longitude = Number(location?.longitude);
+  return Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
+    ? { latitude, longitude }
+    : null;
+};
+
 export const priceInCents = (value) => Math.round(Number(value) * 100);
 
 export const discountPercent = (value) =>

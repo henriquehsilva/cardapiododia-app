@@ -100,6 +100,24 @@ const customerError = (customer) => {
     return "Informe um telefone ou WhatsApp válido, com DDD.";
   return "";
 };
+const requestCustomerLocation = () => new Promise((resolve) => {
+  if (!navigator.geolocation) { resolve(null); return; }
+  navigator.geolocation.getCurrentPosition(
+    ({ coords }) => resolve({ latitude: coords.latitude, longitude: coords.longitude }),
+    () => resolve(null),
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+  );
+});
+const orderWhatsAppUrl = ({ store, orderId, items, total, customer, location, trackingUrl, payment }) => {
+  const whatsapp = String(store.whatsapp || '').replace(/\D/g, '');
+  if (!whatsapp) return '';
+  const lines = items.map((item) => `• ${item.quantity}x ${item.name} — ${money(Number(item.unitPrice) * Number(item.quantity))}`);
+  const locationText = location
+    ? `Localização: https://www.google.com/maps?q=${location.latitude},${location.longitude}`
+    : 'Localização: não compartilhada pelo cliente';
+  const message = [`*Novo pedido #${orderId.slice(0, 8).toUpperCase()}*`, payment, '', ...lines, '', `*Total: ${money(total)}*`, '', `Cliente: ${customer.name}`, `WhatsApp: ${customer.phone}`, `E-mail: ${customer.email}`, locationText, '', `Acompanhamento: ${trackingUrl}`].filter(Boolean).join('\n');
+  return `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
+};
 const normalizeSearch = (value) =>
   String(value || "")
     .normalize("NFD")
@@ -991,13 +1009,14 @@ function StorePage() {
     setPaying(true);
     setError("");
     try {
+      const location = await requestCustomerLocation();
       const selected = purchasable.filter((product) => cart[product.id]);
       const items = selected.map((product) => ({ id: product.id, quantity: cart[product.id] }));
       let orderId;
       let trackingToken;
       let confirmedTotal = total;
       if (firebaseEnabled) {
-        const response = await fetch("/.netlify/functions/create-delivery-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: store.id, slug: store.slug, items, customer: normalizeCustomer(customer) }) });
+        const response = await fetch("/.netlify/functions/create-delivery-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ storeId: store.id, slug: store.slug, items, customer: normalizeCustomer(customer), location }) });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Não foi possível registrar o pedido.");
         orderId = data.orderId;
@@ -1010,7 +1029,9 @@ function StorePage() {
         const order = { id: orderId, customer: normalizeCustomer(customer), provider: "delivery", paymentMethod: "pay_on_delivery", status: "pending_confirmation", total, createdAt: new Date().toISOString(), items: orderItems, trackingToken };
         safeStorageSet("cdd-orders", JSON.stringify([order, ...(readStoredJson("cdd-orders") || [])]));
       }
-      setDeliveryOrder({ id: orderId, total: confirmedTotal, trackingPath: `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}` });
+      const trackingPath = `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}`;
+      const orderItems = selected.map((product) => ({ name: product.name, quantity: cart[product.id], unitPrice: productCheckoutPrice(product) }));
+      setDeliveryOrder({ id: orderId, total: confirmedTotal, trackingPath, whatsappUrl: orderWhatsAppUrl({ store, orderId, items: orderItems, total: confirmedTotal, customer: normalizeCustomer(customer), location, trackingUrl: `${window.location.origin}${trackingPath}`, payment: 'Pagamento na entrega' }) });
       setCart({});
       setCartOpen(false);
     } catch (err) { setError(err.message); } finally { setPaying(false); }
@@ -1027,6 +1048,7 @@ function StorePage() {
     setPaying(true);
     setError('');
     try {
+      const location = await requestCustomerLocation();
       const selected = purchasable.filter((product) => cart[product.id]);
       const requestedItems = selected.map((product) => ({ id: product.id, quantity: cart[product.id] }));
       let orderId;
@@ -1047,6 +1069,7 @@ function StorePage() {
             slug: store.slug,
             items: requestedItems,
             customer: normalizeCustomer(customer),
+            location,
           }),
         });
         const data = await response.json().catch(() => ({}));
@@ -1088,6 +1111,7 @@ function StorePage() {
         `Cliente: ${normalizedCustomer.name}`,
         `WhatsApp: ${normalizedCustomer.phone}`,
         `E-mail: ${normalizedCustomer.email}`,
+        location ? `Localização: https://www.google.com/maps?q=${location.latitude},${location.longitude}` : 'Localização: não compartilhada pelo cliente',
         '',
         `Acompanhe o pedido: ${trackingUrl}`,
       ].join('\n');
@@ -1121,6 +1145,7 @@ function StorePage() {
     setPaying(true);
     setError("");
     try {
+      const location = await requestCustomerLocation();
       let confirmedTotal = total;
       let orderId = "";
       let trackingToken = "";
@@ -1137,6 +1162,7 @@ function StorePage() {
             slug: store.slug,
             items,
             customer: normalizeCustomer(customer),
+            location,
           }),
         });
         const data = await response.json().catch(() => ({}));
@@ -1163,7 +1189,9 @@ function StorePage() {
         margin: 2,
         color: { dark: "#12202d", light: "#ffffff" },
       });
-      setPixPayment({ payload, qrCode, total: confirmedTotal, orderId, trackingPath: `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}` });
+      const trackingPath = `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}`;
+      const orderItems = purchasable.filter((product) => cart[product.id]).map((product) => ({ name: product.name, quantity: cart[product.id], unitPrice: productCheckoutPrice(product) }));
+      setPixPayment({ payload, qrCode, total: confirmedTotal, orderId, trackingPath, whatsappUrl: orderWhatsAppUrl({ store, orderId, items: orderItems, total: confirmedTotal, customer: normalizeCustomer(customer), location, trackingUrl: `${window.location.origin}${trackingPath}`, payment: 'Pagamento via Pix' }) });
       setCart({});
       setCartOpen(false);
     } catch (err) {
@@ -1533,7 +1561,7 @@ function StorePage() {
           onClose={() => setPixPayment(null)}
         />
       )}
-      {deliveryOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setDeliveryOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Combinado! Você paga ao receber.</h2><p>A loja recebeu seu pedido. O pagamento será feito no momento da entrega ou retirada.</p><strong>{money(deliveryOrder.total)} · à vista</strong><small>Pedido {deliveryOrder.id.slice(0, 8).toUpperCase()}</small><Link className="button primary full" to={deliveryOrder.trackingPath}>Acompanhar pedido</Link><button className="button outline full" onClick={() => setDeliveryOrder(null)}>Continuar na loja</button></section></div>}
+      {deliveryOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setDeliveryOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Combinado! Você paga ao receber.</h2><p>Envie à loja o resumo com sua localização para confirmar o pedido.</p><strong>{money(deliveryOrder.total)} · à vista</strong><small>Pedido {deliveryOrder.id.slice(0, 8).toUpperCase()}</small>{deliveryOrder.whatsappUrl && <a className="button primary full" href={deliveryOrder.whatsappUrl} target="_blank" rel="noreferrer">Enviar resumo à loja</a>}<Link className="button outline full" to={deliveryOrder.trackingPath}>Acompanhar pedido</Link><button className="button outline full" onClick={() => setDeliveryOrder(null)}>Continuar na loja</button></section></div>}
       {whatsappOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setWhatsappOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Seu pedido está pronto para confirmação.</h2><p>Envie o resumo à loja e acompanhe as atualizações pelo seu código.</p><strong>{money(whatsappOrder.total)}</strong><small>Pedido {whatsappOrder.id.slice(0, 8).toUpperCase()}</small><a className="button primary full" href={whatsappOrder.whatsappUrl} target="_blank" rel="noreferrer">Enviar pedido à loja</a><Link className="button outline full" to={whatsappOrder.trackingPath}>Acompanhar pedido</Link></section></div>}
     </div>
   );
@@ -1625,11 +1653,11 @@ function PixModal({ store, total, payment, onClose }) {
         </small>
         <a
           className="pix-whatsapp"
-          href={`https://wa.me/${String(store.whatsapp || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Olá! Acabei de realizar o Pix de ${money(total)} referente ao meu pedido.`)}`}
+          href={payment.whatsappUrl || `https://wa.me/${String(store.whatsapp || "").replace(/\D/g, "")}`}
           target="_blank"
           rel="noreferrer"
         >
-          Enviar comprovante pelo WhatsApp
+          Enviar resumo e comprovante à loja
         </a>
       </section>
     </div>

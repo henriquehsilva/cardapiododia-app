@@ -1,5 +1,5 @@
 import { firebaseAdmin, json } from "./_firebase.js";
-import { cleanCustomer, validCustomer } from "./_orders.js";
+import { cleanCustomer, cleanLocation, validCustomer } from "./_orders.js";
 import { createOrder } from './_order-items.js';
 import { randomUUID } from 'node:crypto';
 
@@ -7,8 +7,9 @@ export default async function (request) {
   if (request.method !== "POST")
     return json(405, { error: "Método não permitido." });
   try {
-    const { storeId: requestedStoreId, slug, items, customer: rawCustomer } = await request.json();
+    const { storeId: requestedStoreId, slug, items, customer: rawCustomer, location: rawLocation } = await request.json();
     const customer = cleanCustomer(rawCustomer);
+    const location = cleanLocation(rawLocation);
     if ((!requestedStoreId && !slug) || !Array.isArray(items) || !items.length)
       return json(400, { error: "Sacola inválida." });
     if (!validCustomer(customer))
@@ -54,6 +55,7 @@ export default async function (request) {
         status: "pending_confirmation",
         provider: "pix",
         trackingToken,
+        location,
       },
     });
     return json(200, { orderId: orderRef.id, total: totalCents / 100, trackingToken });
