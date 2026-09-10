@@ -768,6 +768,7 @@ function StorePage() {
   const [paying, setPaying] = useState(false);
   const [pixPayment, setPixPayment] = useState(null);
   const [deliveryOrder, setDeliveryOrder] = useState(null);
+  const [whatsappOrder, setWhatsappOrder] = useState(null);
   const [customer, setCustomer] = useState({ name: "", email: "", phone: "" });
   const [error, setError] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -1026,6 +1027,7 @@ function StorePage() {
       const selected = purchasable.filter((product) => cart[product.id]);
       const requestedItems = selected.map((product) => ({ id: product.id, quantity: cart[product.id] }));
       let orderId;
+      let trackingToken;
       let confirmedTotal = total;
       let confirmedItems = selected.map((product) => ({
         productId: product.id,
@@ -1047,10 +1049,12 @@ function StorePage() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || 'Não foi possível registrar o pedido.');
         orderId = data.orderId;
+        trackingToken = data.trackingToken;
         confirmedTotal = Number(data.total);
         confirmedItems = data.items;
       } else {
         orderId = crypto.randomUUID();
+        trackingToken = crypto.randomUUID();
         const order = {
           id: orderId,
           customer: normalizeCustomer(customer),
@@ -1060,10 +1064,13 @@ function StorePage() {
           total,
           createdAt: new Date().toISOString(),
           items: confirmedItems,
+          trackingToken,
         };
         safeStorageSet('cdd-orders', JSON.stringify([order, ...(readStoredJson('cdd-orders') || [])]));
       }
       const normalizedCustomer = normalizeCustomer(customer);
+      const trackingPath = `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}`;
+      const trackingUrl = `${window.location.origin}${trackingPath}`;
       const itemLines = confirmedItems.map((item) =>
         `• ${item.quantity}x ${item.name} — ${money(Number(item.unitPrice) * Number(item.quantity))}`,
       );
@@ -1078,10 +1085,18 @@ function StorePage() {
         `Cliente: ${normalizedCustomer.name}`,
         `WhatsApp: ${normalizedCustomer.phone}`,
         `E-mail: ${normalizedCustomer.email}`,
+        '',
+        `Acompanhe o pedido: ${trackingUrl}`,
       ].join('\n');
       setCart({});
       setCartOpen(false);
-      window.location.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
+      setWhatsappOrder({
+        id: orderId,
+        total: confirmedTotal,
+        items: confirmedItems,
+        whatsappUrl: `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
+        trackingPath,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -1506,8 +1521,56 @@ function StorePage() {
         />
       )}
       {deliveryOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setDeliveryOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Combinado! Você paga ao receber.</h2><p>A loja recebeu seu pedido. O pagamento será feito no momento da entrega ou retirada.</p><strong>{money(deliveryOrder.total)} · à vista</strong><small>Pedido {deliveryOrder.id.slice(0, 8).toUpperCase()}</small><button className="button primary full" onClick={() => setDeliveryOrder(null)}>Continuar na loja</button></section></div>}
+      {whatsappOrder && <div className="modal-backdrop"><section className="delivery-order-success"><button className="modal-close" onClick={() => setWhatsappOrder(null)}>×</button><span>✓</span><p className="eyebrow">PEDIDO REGISTRADO</p><h2>Seu pedido está pronto para confirmação.</h2><p>Envie o resumo à loja e acompanhe as atualizações pelo seu código.</p><strong>{money(whatsappOrder.total)}</strong><small>Pedido {whatsappOrder.id.slice(0, 8).toUpperCase()}</small><a className="button primary full" href={whatsappOrder.whatsappUrl} target="_blank" rel="noreferrer">Enviar pedido à loja</a><Link className="button outline full" to={whatsappOrder.trackingPath}>Acompanhar pedido</Link></section></div>}
     </div>
   );
+}
+
+const trackingStatus = {
+  pending_confirmation: ['Pedido recebido', 'A loja está analisando e confirmará o pedido.'],
+  pending: ['Aguardando pagamento', 'O pedido aguarda a confirmação do pagamento.'],
+  paid: ['Pagamento confirmado', 'O pagamento foi confirmado pela loja.'],
+  preparing: ['Em preparo', 'A loja está preparando o seu pedido.'],
+  ready: ['Pedido pronto', 'Seu pedido está pronto para retirada ou entrega.'],
+  delivered: ['Pedido entregue', 'O pedido foi concluído.'],
+  cancelled: ['Pedido cancelado', 'Este pedido foi cancelado.'],
+  refunded: ['Pedido estornado', 'Este pedido foi estornado.'],
+};
+
+function OrderTrackingPage() {
+  const { storeId, orderId } = useParams();
+  const token = new URLSearchParams(location.search).get('token') || '';
+  const [order, setOrder] = useState(null);
+  const [trackingError, setTrackingError] = useState('');
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        let data;
+        if (firebaseEnabled) {
+          const params = new URLSearchParams({ storeId, orderId, token });
+          const response = await fetch(`/.netlify/functions/track-order?${params}`);
+          data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || 'Pedido não encontrado.');
+        } else {
+          const saved = (readStoredJson('cdd-orders') || []).find((item) => item.id === orderId && item.trackingToken === token);
+          if (!saved) throw new Error('Pedido não encontrado.');
+          const savedStore = normalizeStore(localStore() || demoStore);
+          data = { ...saved, store: { brand: savedStore.brand, slug: savedStore.slug, whatsapp: savedStore.whatsapp } };
+        }
+        if (active) { setOrder(data); setTrackingError(''); }
+      } catch (error) {
+        if (active) setTrackingError(error.message);
+      }
+    };
+    load();
+    const interval = window.setInterval(load, 10000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [storeId, orderId, token]);
+  if (trackingError) return <main className="empty"><h1>Não foi possível acompanhar</h1><p>{trackingError}</p><Link to="/">Voltar ao início</Link></main>;
+  if (!order) return <main className="center">Carregando pedido…</main>;
+  const [statusTitle, statusText] = trackingStatus[order.status] || ['Pedido atualizado', `Status: ${order.status}`];
+  return <main className="order-tracking-page"><section className="order-tracking-card"><p className="eyebrow">ACOMPANHAMENTO DO PEDIDO</p><h1>{order.store.brand}</h1><div className={`order-tracking-status ${order.status}`}><span>●</span><div><strong>{statusTitle}</strong><p>{statusText}</p></div></div><small>Pedido {order.id.slice(0, 8).toUpperCase()}</small><div className="order-tracking-items">{order.items.map((item, index) => <div key={`${item.name}-${index}`}><span>{item.quantity}x {item.name}</span><strong>{money(item.quantity * item.unitPrice)}</strong></div>)}</div><div className="order-tracking-total"><span>Total</span><strong>{money(order.total)}</strong></div><p className="order-tracking-refresh">Esta página é atualizada automaticamente.</p>{order.store.slug && <Link className="button outline full" to={`/loja/${order.store.slug}`}>Voltar à loja</Link>}</section></main>;
 }
 function PixModal({ store, total, payment, onClose }) {
   const [copied, setCopied] = useState(false);
@@ -2412,7 +2475,7 @@ function Admin({ user, onLogout }) {
                 ? "estornado reembolsado"
               : order.status === "cancelled"
                 ? "cancelado"
-              : ["pix", "delivery"].includes(order.provider)
+              : ["pix", "delivery", "whatsapp"].includes(order.provider)
                 ? "pendente de confirmacao"
                 : "aguardando stripe pendente";
     return normalizeSearch(
@@ -2422,7 +2485,7 @@ function Admin({ user, onLogout }) {
         order.customer?.name,
         order.customer?.email,
         order.customer?.phone,
-        order.provider === "pix" ? "pix" : order.provider === "delivery" ? "cartao na entrega maquininha" : "cartao stripe",
+        order.provider === "pix" ? "pix" : order.provider === "delivery" ? "cartao na entrega maquininha" : order.provider === "whatsapp" ? "whatsapp" : "cartao stripe",
         status,
         ...(order.items || []).map((item) => item.name),
       ].join(" "),
@@ -3420,6 +3483,8 @@ function Admin({ user, onLogout }) {
                             ? "Pix"
                             : order.provider === "delivery"
                               ? "Pagamento na entrega"
+                              : order.provider === "whatsapp"
+                                ? "WhatsApp"
                             : order.status === "paid"
                               ? "Cartão · Stripe confirmado"
                               : "Cartão · Stripe"}
@@ -3449,7 +3514,7 @@ function Admin({ user, onLogout }) {
                                 ? "Checkout expirado"
                                 : order.status === "payment_review"
                                   ? "Revisar pagamento"
-                                  : ["pix", "delivery"].includes(order.provider)
+                                  : ["pix", "delivery", "whatsapp"].includes(order.provider)
                                     ? "Pendente de confirmação"
                                     : "Aguardando Stripe"}
                         </span>
@@ -3484,7 +3549,7 @@ function Admin({ user, onLogout }) {
                           </li>
                         ))}
                       </ul>
-                      {["pix", "delivery"].includes(order.provider) && !["refunded", "cancelled"].includes(order.status) && <div className="manual-order-actions">
+                      {["pix", "delivery", "whatsapp"].includes(order.provider) && !["refunded", "cancelled"].includes(order.status) && <div className="manual-order-actions">
                         {order.status !== "paid" && <button className="button primary small" disabled={saving} onClick={() => confirmManualPayment(order)}>Marcar pagamento como validado</button>}
                         <button className="button outline small refund-order-button" disabled={saving} onClick={() => refundManualOrder(order)}>Estornar pedido</button>
                       </div>}
@@ -4094,6 +4159,7 @@ export default function App() {
       <Route path="/doc" element={<Docs />} />
       <Route path="/lojas" element={<Marketplace />} />
       <Route path="/loja/:slug" element={<StorePage />} />
+      <Route path="/pedido/:storeId/:orderId" element={<OrderTrackingPage />} />
       <Route path="/admin/login" element={<Login user={user} />} />
       <Route path="/admin" element={user === undefined ? <main className="center">Carregando…</main> : <Admin user={user} onLogout={logout} />} />
       <Route path="*" element={<Navigate to="/" />} />

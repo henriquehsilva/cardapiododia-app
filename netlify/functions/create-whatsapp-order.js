@@ -1,6 +1,7 @@
 import { firebaseAdmin, json } from './_firebase.js';
 import { cleanCustomer, validCustomer } from './_orders.js';
 import { createOrder } from './_order-items.js';
+import { randomUUID } from 'node:crypto';
 
 export default async function (request) {
   if (request.method !== 'POST')
@@ -34,6 +35,7 @@ export default async function (request) {
 
     const storeId = storeRef.id;
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
+    const trackingToken = randomUUID();
     const reservation = await createOrder({
       firestore,
       admin,
@@ -45,6 +47,7 @@ export default async function (request) {
         status: 'pending_confirmation',
         provider: 'whatsapp',
         paymentMethod: 'whatsapp',
+        trackingToken,
       },
     });
 
@@ -52,6 +55,7 @@ export default async function (request) {
       orderId: orderRef.id,
       total: reservation.totalCents / 100,
       items: reservation.items,
+      trackingToken,
     });
   } catch (error) {
     console.error(error);
