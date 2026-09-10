@@ -1011,6 +1011,83 @@ function StorePage() {
       setCartOpen(false);
     } catch (err) { setError(err.message); } finally { setPaying(false); }
   };
+  const checkoutWhatsApp = async () => {
+    if (!count) return;
+    const whatsapp = String(store.whatsapp || '').replace(/\D/g, '');
+    if (!whatsapp) {
+      setError('A loja ainda não configurou o WhatsApp.');
+      return;
+    }
+    const validationError = customerError(customer);
+    if (validationError) { setError(validationError); return; }
+    setPaying(true);
+    setError('');
+    try {
+      const selected = purchasable.filter((product) => cart[product.id]);
+      const requestedItems = selected.map((product) => ({ id: product.id, quantity: cart[product.id] }));
+      let orderId;
+      let confirmedTotal = total;
+      let confirmedItems = selected.map((product) => ({
+        productId: product.id,
+        name: product.name,
+        quantity: cart[product.id],
+        unitPrice: productCheckoutPrice(product),
+      }));
+      if (firebaseEnabled) {
+        const response = await fetch('/.netlify/functions/create-whatsapp-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            storeId: store.id,
+            slug: store.slug,
+            items: requestedItems,
+            customer: normalizeCustomer(customer),
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Não foi possível registrar o pedido.');
+        orderId = data.orderId;
+        confirmedTotal = Number(data.total);
+        confirmedItems = data.items;
+      } else {
+        orderId = crypto.randomUUID();
+        const order = {
+          id: orderId,
+          customer: normalizeCustomer(customer),
+          provider: 'whatsapp',
+          paymentMethod: 'whatsapp',
+          status: 'pending_confirmation',
+          total,
+          createdAt: new Date().toISOString(),
+          items: confirmedItems,
+        };
+        safeStorageSet('cdd-orders', JSON.stringify([order, ...(readStoredJson('cdd-orders') || [])]));
+      }
+      const normalizedCustomer = normalizeCustomer(customer);
+      const itemLines = confirmedItems.map((item) =>
+        `• ${item.quantity}x ${item.name} — ${money(Number(item.unitPrice) * Number(item.quantity))}`,
+      );
+      const message = [
+        `Olá! Quero confirmar meu pedido na ${store.brand}.`,
+        '',
+        `*Pedido #${orderId.slice(0, 8).toUpperCase()}*`,
+        ...itemLines,
+        '',
+        `*Total: ${money(confirmedTotal)}*`,
+        '',
+        `Cliente: ${normalizedCustomer.name}`,
+        `WhatsApp: ${normalizedCustomer.phone}`,
+        `E-mail: ${normalizedCustomer.email}`,
+      ].join('\n');
+      setCart({});
+      setCartOpen(false);
+      window.location.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPaying(false);
+    }
+  };
   const checkout = async () => {
     if (!count) return;
     const pixKey = String(store.payment?.pixKey || store.pixKey || "").trim();
@@ -1401,12 +1478,14 @@ function StorePage() {
               !store.pixKey &&
               !store.payment?.stripeConnected &&
               !store.payment?.stripeAccountId && (
-                <a
+                <button
+                  type="button"
                   className="button primary full"
-                  href={`https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Olá! Quero pedir na ${store.brand}. Total: ${money(total)}`)}`}
+                  disabled={paying}
+                  onClick={checkoutWhatsApp}
                 >
-                  Finalizar pelo WhatsApp
-                </a>
+                  {paying ? 'Registrando pedido…' : 'Finalizar pelo WhatsApp'}
+                </button>
               )}
             <small className="secure">
               Escolha como deseja concluir o pagamento.
