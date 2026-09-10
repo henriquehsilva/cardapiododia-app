@@ -821,7 +821,7 @@ function StorePage() {
   useEffect(() => {
     const standalone = isInstalledApp();
     const mobile = window.matchMedia("(max-width: 780px)").matches;
-    if (!standalone && mobile) setShowInstall(true);
+    if (!standalone && mobile && window.__cddInstallPrompt) setShowInstall(true);
     const capturePrompt = (event) => {
       event.preventDefault();
       setInstallPrompt(event);
