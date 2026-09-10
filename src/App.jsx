@@ -1164,6 +1164,7 @@ function StorePage() {
         color: { dark: "#12202d", light: "#ffffff" },
       });
       setPixPayment({ payload, qrCode, total: confirmedTotal, orderId, trackingPath: `/pedido/${store.id || store.slug}/${orderId}?token=${encodeURIComponent(trackingToken)}` });
+      setCart({});
       setCartOpen(false);
     } catch (err) {
       setError(
@@ -1616,6 +1617,7 @@ function PixModal({ store, total, payment, onClose }) {
         <button className="button primary full" onClick={copy}>
           {copied ? "Código Pix copiado ✓" : "Copiar código Pix"}
         </button>
+        {payment.trackingPath && <Link className="button outline full" to={payment.trackingPath}>Acompanhar meu pedido</Link>}
         <small>
           O pagamento será enviado diretamente para{" "}
           <b>{store.payment.pixReceiverName || store.brand}</b>. Envie o
@@ -1629,7 +1631,6 @@ function PixModal({ store, total, payment, onClose }) {
         >
           Enviar comprovante pelo WhatsApp
         </a>
-        {payment.trackingPath && <Link className="button outline full" to={payment.trackingPath}>Acompanhar pedido</Link>}
       </section>
     </div>
   );

@@ -6,6 +6,7 @@ import {
   validCustomer,
 } from "./_orders.js";
 import { createOrder } from './_order-items.js';
+import { randomUUID } from 'node:crypto';
 
 export default async function (request) {
   if (request.method !== "POST")
@@ -50,6 +51,7 @@ export default async function (request) {
             : "A Stripe ainda não habilitou cobranças nesta conta da loja.",
       });
     const orderRef = firestore.collection(`stores/${storeId}/orders`).doc();
+    const trackingToken = randomUUID();
     const reservation = await createOrder({
       firestore,
       admin,
@@ -61,6 +63,7 @@ export default async function (request) {
         status: "pending",
         provider: "stripe",
         stripeAccountId: accountId,
+        trackingToken,
       },
     });
     reservedOrderRef = orderRef;
@@ -91,7 +94,7 @@ export default async function (request) {
           },
         },
         line_items: lineItems,
-        success_url: `${origin}/loja/${store.slug}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/pedido/${storeId}/${orderRef.id}?token=${encodeURIComponent(trackingToken)}`,
         cancel_url: `${origin}/loja/${store.slug}?payment=cancelled`,
         customer_creation: "always",
         customer_email: customer.email,
